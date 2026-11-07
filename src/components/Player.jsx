@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Play,
   Pause,
@@ -10,95 +10,35 @@ import {
   Repeat,
   Repeat1,
   ExternalLink,
+  Repeat2,
 } from "lucide-react";
 import { formatDuration } from "../services/musicApi";
+import { useAudio } from "../context/AudioContext";
 
-export default function Player({
-  currentTrack,
-  isPlaying,
-  setIsPlaying,
-  onNext,
-  onPrev,
-  isShuffle,
-  setIsShuffle,
-}) {
-  const audioRef = useRef(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.85);
-  const [isMuted, setIsMuted] = useState(false);
-  const [repeatMode, setRepeatMode] = useState("off"); // 'off', 'all', 'one'
-  const [isLoading, setIsLoading] = useState(false);
+export default function Player() {
+  const [showMobileVolume, setShowMobileVolume] = useState(false);
 
-  // Sync stream URL when currentTrack changes
-  useEffect(() => {
-    if (!currentTrack || !audioRef.current) return;
-    if (currentTrack.previewUrl) {
-      audioRef.current.src = currentTrack.previewUrl;
-      audioRef.current.currentTime = 0;
-      setCurrentTime(0);
-      setIsLoading(true);
-
-      if (isPlaying) {
-        audioRef.current
-          .play()
-          .then(() => setIsLoading(false))
-          .catch((err) => {
-            console.warn("Autoplay dicegah browser:", err);
-            setIsLoading(false);
-          });
-      }
-    }
-  }, [currentTrack]);
-
-  // Sync play/pause state
-  useEffect(() => {
-    if (!audioRef.current || !currentTrack) return;
-    if (isPlaying) {
-      audioRef.current.play().catch(() => setIsPlaying(false));
-    } else {
-      audioRef.current.pause();
-    }
-  }, [isPlaying]);
-
-  // Volume change
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 30);
-    }
-  };
-
-  const handleSeek = (e) => {
-    const seekTime = parseFloat(e.target.value);
-    setCurrentTime(seekTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = seekTime;
-    }
-  };
-
-  const handleEnded = () => {
-    if (repeatMode === "one") {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
-    } else {
-      onNext();
-    }
-  };
-
-  const toggleRepeat = () => {
-    if (repeatMode === "off") setRepeatMode("all");
-    else if (repeatMode === "all") setRepeatMode("one");
-    else setRepeatMode("off");
-  };
+  const {
+    currentTrack,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    isMuted,
+    isLoading,
+    isShuffle,
+    repeatMode,
+    isLoopSegment,
+    togglePlay,
+    seek,
+    setVolume,
+    toggleMute,
+    toggleLoopSegment,
+    nextTrack,
+    prevTrack,
+    toggleShuffle,
+    toggleRepeat,
+  } = useAudio();
 
   if (!currentTrack) return null;
 
@@ -106,30 +46,43 @@ export default function Player({
     currentTrack.artwork ||
     "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60";
 
+  const handleSeekChange = (e) => {
+    seek(parseFloat(e.target.value));
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-xl border-t border-gray-800/80 px-4 sm:px-6 py-3 shadow-2xl">
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleTimeUpdate}
-        onEnded={handleEnded}
-        onWaiting={() => setIsLoading(true)}
-        onPlaying={() => setIsLoading(false)}
+    <div
+      role="region"
+      aria-label="Pemutar Audio"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#050608]/90 backdrop-blur-2xl border-t border-white/[0.08] px-4 sm:px-6 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.7)] transition-all"
+    >
+      {/* Ambient subtle violet underglow bar */}
+      <div
+        aria-hidden="true"
+        className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent pointer-events-none"
       />
 
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Track Info (Left) */}
         <div className="flex items-center gap-3.5 w-full md:w-1/4 min-w-[200px]">
-          <img
-            src={artwork}
-            alt={currentTrack.title}
-            className="w-12 h-12 rounded-lg object-cover shadow-md border border-gray-800"
-          />
-          <div className="overflow-hidden">
-            <h4 className="text-sm font-semibold text-white truncate" title={currentTrack.title}>
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-md border border-white/[0.08] bg-[#090a0f] shrink-0">
+            <img
+              src={artwork}
+              alt={`Sampul ${currentTrack.title}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="overflow-hidden flex-1 min-w-0">
+            <h4
+              className="text-sm font-semibold text-slate-100 truncate tracking-tight"
+              title={currentTrack.title}
+            >
               {currentTrack.title}
             </h4>
-            <p className="text-xs text-gray-400 truncate mt-0.5" title={currentTrack.artist}>
+            <p
+              className="text-xs text-slate-400 truncate mt-0.5"
+              title={currentTrack.artist}
+            >
               {currentTrack.artist}
             </p>
           </div>
@@ -138,8 +91,9 @@ export default function Player({
               href={currentTrack.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-500 hover:text-purple-400 p-1 transition-colors"
-              title="Dengarkan full di Deezer"
+              className="text-slate-500 hover:text-purple-400 p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 shrink-0"
+              title="Dengarkan lagu penuh di Deezer (buka di tab baru)"
+              aria-label="Dengarkan lagu penuh di Deezer (buka di tab baru)"
             >
               <ExternalLink className="w-4 h-4" />
             </a>
@@ -148,32 +102,44 @@ export default function Player({
 
         {/* Center Controls & Scrubber */}
         <div className="flex flex-col items-center gap-1.5 w-full md:w-2/4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
-              onClick={() => setIsShuffle(!isShuffle)}
-              className={`p-1.5 rounded-full transition-colors ${
-                isShuffle ? "text-purple-400" : "text-gray-400 hover:text-white"
+              type="button"
+              onClick={toggleShuffle}
+              className={`p-2 rounded-full transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                isShuffle
+                  ? "text-purple-300 bg-purple-500/15 border border-purple-500/30 shadow-sm shadow-purple-950/40"
+                  : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
               }`}
-              title="Shuffle"
+              title={isShuffle ? "Acak lagu: Aktif" : "Acak lagu: Nonaktif"}
+              aria-label={isShuffle ? "Acak lagu aktif, klik untuk menonaktifkan" : "Acak lagu nonaktif, klik untuk mengaktifkan"}
             >
               <Shuffle className="w-4 h-4" />
             </button>
 
             <button
-              onClick={onPrev}
-              className="text-gray-300 hover:text-white transition-colors"
-              title="Previous"
+              type="button"
+              onClick={prevTrack}
+              className="p-2 text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              title="Lagu Sebelumnya"
+              aria-label="Lagu Sebelumnya"
             >
               <SkipBack className="w-5 h-5 fill-current" />
             </button>
 
             <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-600/30 transition-transform active:scale-95"
-              title={isPlaying ? "Pause" : "Play"}
+              type="button"
+              onClick={togglePlay}
+              className="w-11 h-11 rounded-full bg-purple-600/95 hover:bg-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-950/60 border border-purple-400/30 transition-transform active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050608]"
+              title={isPlaying ? "Jeda pemutaran" : "Putar lagu"}
+              aria-label={isPlaying ? "Jeda pemutaran" : "Putar lagu"}
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div
+                  role="status"
+                  aria-label="Memuat audio..."
+                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                />
               ) : isPlaying ? (
                 <Pause className="w-5 h-5 fill-white" />
               ) : (
@@ -182,19 +148,25 @@ export default function Player({
             </button>
 
             <button
-              onClick={onNext}
-              className="text-gray-300 hover:text-white transition-colors"
-              title="Next"
+              type="button"
+              onClick={nextTrack}
+              className="p-2 text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-full transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              title="Lagu Berikutnya"
+              aria-label="Lagu Berikutnya"
             >
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
 
             <button
+              type="button"
               onClick={toggleRepeat}
-              className={`p-1.5 rounded-full transition-colors ${
-                repeatMode !== "off" ? "text-purple-400" : "text-gray-400 hover:text-white"
+              className={`p-2 rounded-full transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                repeatMode !== "off"
+                  ? "text-purple-300 bg-purple-500/15 border border-purple-500/30 shadow-sm shadow-purple-950/40"
+                  : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
               }`}
-              title={`Repeat: ${repeatMode}`}
+              title={`Ulangi lagu: ${repeatMode === "one" ? "Lagu ini" : repeatMode === "all" ? "Semua lagu" : "Mati"}`}
+              aria-label={`Ulangi lagu: ${repeatMode === "one" ? "Lagu ini" : repeatMode === "all" ? "Semua lagu" : "Mati"}`}
             >
               {repeatMode === "one" ? (
                 <Repeat1 className="w-4 h-4" />
@@ -202,48 +174,132 @@ export default function Player({
                 <Repeat className="w-4 h-4" />
               )}
             </button>
+
+            {/* Loop Segment Button (untuk Reff Loop) */}
+            <button
+              type="button"
+              onClick={toggleLoopSegment}
+              className={`p-2 rounded-full transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
+                isLoopSegment
+                  ? "text-purple-200 bg-purple-600/30 border border-purple-400/40 shadow-sm shadow-purple-950/40"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]"
+              }`}
+              title={isLoopSegment ? "Reff Loop: Aktif" : "Reff Loop: Nonaktif"}
+              aria-label={isLoopSegment ? "Reff Loop aktif, klik untuk menonaktifkan" : "Reff Loop nonaktif, klik untuk mengaktifkan"}
+            >
+              <Repeat2 className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Time scrubber */}
-          <div className="w-full flex items-center gap-3 text-xs text-gray-400 font-mono">
-            <span className="w-9 text-right">{formatDuration(currentTime)}</span>
+          <div className="w-full flex items-center gap-3 text-xs text-slate-400 font-mono">
+            <span className="w-9 text-right tabular-nums select-none">{formatDuration(currentTime)}</span>
             <input
               type="range"
               min="0"
               max={duration || 30}
               step="0.1"
               value={currentTime}
-              onChange={handleSeek}
-              className="flex-1 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:h-1.5 transition-all"
+              onChange={handleSeekChange}
+              aria-label="Posisi pemutaran lagu"
+              aria-valuemin={0}
+              aria-valuemax={duration || 30}
+              aria-valuenow={currentTime}
+              aria-valuetext={`${formatDuration(currentTime)} dari ${formatDuration(duration)}`}
+              className="flex-1 h-1.5 bg-[#141724] rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-[#1a1e30] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             />
-            <span className="w-9">{formatDuration(duration)}</span>
+            <span className="w-9 tabular-nums select-none">{formatDuration(duration)}</span>
           </div>
         </div>
 
-        {/* Volume & Extras (Right) */}
-        <div className="hidden md:flex items-center justify-end gap-2.5 w-1/4">
+        {/* Volume & Extras (Desktop & Mobile) */}
+        <div className="relative flex items-center justify-end gap-2.5 w-auto md:w-1/4">
+          {/* Mobile Popover Volume Slider */}
+          {showMobileVolume && (
+            <div
+              role="group"
+              aria-label="Pengaturan volume mobile"
+              className="md:hidden absolute bottom-full mb-3 right-0 bg-[#0f111a] border border-white/[0.1] rounded-2xl p-3 shadow-2xl flex items-center gap-3 backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-150"
+            >
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="p-1 text-slate-400 hover:text-white rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                title={isMuted || volume === 0 ? "Batal Bisukan Suara" : "Bisukan Suara"}
+                aria-label={isMuted || volume === 0 ? "Batal Bisukan Suara" : "Bisukan Suara"}
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeX className="w-4 h-4 text-purple-400" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                aria-label="Volume audio mobile"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round((isMuted ? 0 : volume) * 100)}
+                aria-valuetext={`${Math.round((isMuted ? 0 : volume) * 100)} persen`}
+                className="w-28 h-1.5 bg-[#141724] rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-[#1a1e30] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              />
+              <span className="text-[10px] font-mono text-slate-400 w-7 text-right select-none">
+                {Math.round((isMuted ? 0 : volume) * 100)}%
+              </span>
+            </div>
+          )}
+
+          {/* Mobile Toggle Button */}
           <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="text-gray-400 hover:text-white transition-colors"
+            type="button"
+            onClick={() => setShowMobileVolume((prev) => !prev)}
+            className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            title="Buka slider volume"
+            aria-label="Buka slider volume"
+            aria-expanded={showMobileVolume}
           >
             {isMuted || volume === 0 ? (
-              <VolumeX className="w-5 h-5 text-red-400" />
+              <VolumeX className="w-5 h-5 text-purple-400" />
             ) : (
               <Volume2 className="w-5 h-5" />
             )}
           </button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={isMuted ? 0 : volume}
-            onChange={(e) => {
-              setVolume(parseFloat(e.target.value));
-              if (isMuted) setIsMuted(false);
-            }}
-            className="w-24 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
-          />
+
+          {/* Desktop Permanent Volume Slider */}
+          <div className="hidden md:flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              title={isMuted || volume === 0 ? "Batal Bisukan Suara" : "Bisukan Suara"}
+              aria-label={isMuted || volume === 0 ? "Batal Bisukan Suara" : "Bisukan Suara"}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="w-5 h-5 text-purple-400" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={isMuted ? 0 : volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              aria-label="Volume audio desktop"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round((isMuted ? 0 : volume) * 100)}
+              aria-valuetext={`${Math.round((isMuted ? 0 : volume) * 100)} persen`}
+              className="w-24 h-1.5 bg-[#141724] rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-[#1a1e30] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -63,17 +63,55 @@ export async function searchTracks(query) {
 
 // Standardisasi format data lagu
 function formatDeezerTrack(item) {
+  return toUnifiedTrack(item);
+}
+
+/**
+ * Adapter untuk mengubah entitas item Deezer API menjadi format UnifiedTrack.
+ * Mempertahankan properti lama (previewUrl, album, rank, dll.) demi kompatibilitas ke belakang.
+ *
+ * @param {any} item - Raw object lagu dari respons Deezer
+ * @returns {import("../data/viralSounds").UnifiedTrack}
+ */
+export function toUnifiedTrack(item) {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+
+  const rawId = item.id != null ? String(item.id) : String(Date.now());
+  const id = rawId.startsWith("dz-") ? rawId : `dz-${rawId}`;
+  const title = item.title_short || item.title || "Untitled";
+  const artist = item.artist?.name || "Unknown Artist";
+  const artwork = item.album?.cover_big || item.album?.cover_medium || item.album?.cover || "";
+  const audioUrl = typeof item.preview === "string" ? item.preview : "";
+  const fullDuration = typeof item.duration === "number" && item.duration > 0 ? item.duration : 30;
+  // Durasi preview audio Deezer adalah 30 detik (atau durasi lagu jika lebih pendek)
+  const previewDuration = Math.min(30, fullDuration);
+
   return {
-    id: item.id,
-    title: item.title_short || item.title,
-    artist: item.artist?.name || "Unknown Artist",
-    artistPicture: item.artist?.picture_medium,
+    // Kontrak UnifiedTrack
+    id,
+    source: "deezer",
+    type: "preview",
+    title,
+    artist,
+    artwork,
+    audioUrl,
+    duration: fullDuration,
+    previewDuration,
+    segmentStart: 0,
+    segmentEnd: previewDuration,
+    isLoopable: false,
+    attribution: "Deezer Preview Catalog",
+    sourceUrl: item.link || "https://www.deezer.com",
+    viralMeta: null,
+
+    // Properti kompatibilitas dengan komponen eksisting
+    previewUrl: audioUrl,
     album: item.album?.title || "",
-    artwork: item.album?.cover_big || item.album?.cover_medium || item.album?.cover,
-    previewUrl: item.preview, // URL audio resmi Deezer MP3
-    duration: item.duration || 30,
+    artistPicture: item.artist?.picture_medium || "",
     rank: item.rank || 0,
-    link: item.link,
+    link: item.link || ""
   };
 }
 
