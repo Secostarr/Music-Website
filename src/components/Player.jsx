@@ -9,8 +9,9 @@ import {
   Shuffle,
   Repeat,
   Repeat1,
+  ExternalLink,
 } from "lucide-react";
-import { getStreamUrl, formatDuration } from "../services/audius";
+import { formatDuration } from "../services/musicApi";
 
 export default function Player({
   currentTrack,
@@ -24,7 +25,7 @@ export default function Player({
   const audioRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
   const [repeatMode, setRepeatMode] = useState("off"); // 'off', 'all', 'one'
   const [isLoading, setIsLoading] = useState(false);
@@ -32,20 +33,21 @@ export default function Player({
   // Sync stream URL when currentTrack changes
   useEffect(() => {
     if (!currentTrack || !audioRef.current) return;
-    const streamUrl = getStreamUrl(currentTrack.id);
-    audioRef.current.src = streamUrl;
-    audioRef.current.currentTime = 0;
-    setCurrentTime(0);
-    setIsLoading(true);
+    if (currentTrack.previewUrl) {
+      audioRef.current.src = currentTrack.previewUrl;
+      audioRef.current.currentTime = 0;
+      setCurrentTime(0);
+      setIsLoading(true);
 
-    if (isPlaying) {
-      audioRef.current
-        .play()
-        .then(() => setIsLoading(false))
-        .catch((err) => {
-          console.warn("Autoplay dicegah browser atau loading:", err);
-          setIsLoading(false);
-        });
+      if (isPlaying) {
+        audioRef.current
+          .play()
+          .then(() => setIsLoading(false))
+          .catch((err) => {
+            console.warn("Autoplay dicegah browser:", err);
+            setIsLoading(false);
+          });
+      }
     }
   }, [currentTrack]);
 
@@ -69,7 +71,7 @@ export default function Player({
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || currentTrack?.duration || 0);
+      setDuration(audioRef.current.duration || 30);
     }
   };
 
@@ -101,8 +103,7 @@ export default function Player({
   if (!currentTrack) return null;
 
   const artwork =
-    currentTrack.artwork?.["150x150"] ||
-    currentTrack.artwork?.["480x480"] ||
+    currentTrack.artwork ||
     "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60";
 
   return (
@@ -128,13 +129,21 @@ export default function Player({
             <h4 className="text-sm font-semibold text-white truncate" title={currentTrack.title}>
               {currentTrack.title}
             </h4>
-            <p
-              className="text-xs text-gray-400 truncate mt-0.5"
-              title={currentTrack.user?.name}
-            >
-              {currentTrack.user?.name || "Unknown Artist"}
+            <p className="text-xs text-gray-400 truncate mt-0.5" title={currentTrack.artist}>
+              {currentTrack.artist}
             </p>
           </div>
+          {currentTrack.link && (
+            <a
+              href={currentTrack.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-purple-400 p-1 transition-colors"
+              title="Dengarkan full di Deezer"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
         </div>
 
         {/* Center Controls & Scrubber */}
@@ -201,7 +210,8 @@ export default function Player({
             <input
               type="range"
               min="0"
-              max={duration || 100}
+              max={duration || 30}
+              step="0.1"
               value={currentTime}
               onChange={handleSeek}
               className="flex-1 h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:h-1.5 transition-all"

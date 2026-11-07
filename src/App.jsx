@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import TrackCard from "./components/TrackCard";
 import Player from "./components/Player";
-import { fetchTrendingTracks, searchTracks } from "./services/audius";
+import { fetchTopCharts, searchTracks, GENRE_PRESETS } from "./services/musicApi";
 import { Sparkles, TrendingUp, Music2, AlertCircle } from "lucide-react";
 
 export default function App() {
@@ -11,29 +11,33 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(GENRE_PRESETS[0]);
 
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
 
-  // Load tracks on genre change or initial mount
+  // Load tracks when category changes
   useEffect(() => {
-    loadTracks(selectedGenre);
-  }, [selectedGenre]);
+    loadCategoryTracks(selectedCategory);
+  }, [selectedCategory]);
 
-  const loadTracks = async (genre) => {
+  const loadCategoryTracks = async (category) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchTrendingTracks(genre);
+      let data = [];
+      if (category.name === "Top Hits Global") {
+        data = await fetchTopCharts();
+      } else {
+        data = await searchTracks(category.query);
+      }
       setTracks(data);
       if (data.length > 0 && !currentTrack) {
-        // Prepare initial track without autoplaying
         setCurrentTrack(data[0]);
       }
     } catch (err) {
-      setError("Gagal memuat daftar lagu. Periksa koneksi internet Anda.");
+      setError("Gagal memuat lagu. Coba pilih kategori lain atau periksa koneksi.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +45,7 @@ export default function App() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      loadTracks(selectedGenre);
+      loadCategoryTracks(selectedCategory);
       return;
     }
     setLoading(true);
@@ -96,9 +100,9 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearch={handleSearch}
-        selectedGenre={selectedGenre}
-        onSelectGenre={(genre) => {
-          setSelectedGenre(genre);
+        selectedCategory={selectedCategory}
+        onSelectCategory={(category) => {
+          setSelectedCategory(category);
           setSearchQuery("");
         }}
       />
@@ -111,23 +115,26 @@ export default function App() {
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="max-w-xl">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 mb-3">
-                  <Sparkles className="w-3.5 h-3.5" /> Featured Track
+                  <Sparkles className="w-3.5 h-3.5" /> Top Track Now
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight line-clamp-1">
                   {featuredTrack.title}
                 </h2>
                 <p className="text-sm text-gray-300 mt-1 line-clamp-1">
-                  By <span className="font-semibold text-purple-300">{featuredTrack.user?.name}</span>
+                  By <span className="font-semibold text-purple-300">{featuredTrack.artist}</span>
+                  {featuredTrack.album && (
+                    <span className="text-gray-400"> • {featuredTrack.album}</span>
+                  )}
                 </p>
                 <div className="flex items-center gap-3 mt-5">
                   <button
                     onClick={() => handlePlayTrack(featuredTrack)}
-                    className="px-6 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-all shadow-lg shadow-purple-600/30 flex items-center gap-2"
+                    className="px-6 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-all shadow-lg shadow-purple-600/30 flex items-center gap-2 cursor-pointer"
                   >
-                    {currentTrack?.id === featuredTrack.id && isPlaying ? "Pause" : "Play Now"}
+                    {currentTrack?.id === featuredTrack.id && isPlaying ? "Pause" : "Play Preview"}
                   </button>
-                  <span className="text-xs text-gray-400 font-mono">
-                    {featuredTrack.genre || "Featured"}
+                  <span className="text-xs text-emerald-400 font-mono">
+                    HQ Official Audio
                   </span>
                 </div>
               </div>
@@ -136,8 +143,7 @@ export default function App() {
               <div className="hidden sm:block relative w-36 h-36 rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0">
                 <img
                   src={
-                    featuredTrack.artwork?.["480x480"] ||
-                    featuredTrack.artwork?.["150x150"] ||
+                    featuredTrack.artwork ||
                     "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60"
                   }
                   alt={featuredTrack.title}
@@ -156,7 +162,9 @@ export default function App() {
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-purple-400" />
             <h2 className="text-lg sm:text-xl font-bold tracking-tight">
-              {searchQuery ? `Hasil Pencarian "${searchQuery}"` : `Trending: ${selectedGenre}`}
+              {searchQuery
+                ? `Hasil Pencarian: "${searchQuery}"`
+                : `Katalog: ${selectedCategory.name}`}
             </h2>
           </div>
           <span className="text-xs text-gray-400">{tracks.length} Lagu</span>
@@ -207,7 +215,7 @@ export default function App() {
             <Music2 className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-gray-300">Tidak ada lagu ditemukan</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Coba cari dengan kata kunci lain atau pilih genre lain.
+              Coba cari dengan nama artis atau judul lagu lain.
             </p>
           </div>
         )}
