@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://secomusic.onrender.com/api/$1"
+      "source": "/api/music/search",
+      "destination": "/api/music/search.py"
     },
     {
       "source": "/(.*)",
