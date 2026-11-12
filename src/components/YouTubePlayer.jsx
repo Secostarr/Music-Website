@@ -23,9 +23,21 @@ export default function YouTubePlayer() {
 
     const attach = () => {
       if (cancelled || !window.YT?.Player || !hostRef.current) return false;
+      const playback = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("irama_playback") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const savedTime = playback?.track?.videoId === videoId ? playback.currentTime || 0 : 0;
+
       if (ytPlayerRef.current?.loadVideoById) {
         try {
-          ytPlayerRef.current.loadVideoById(videoId);
+          ytPlayerRef.current.loadVideoById({
+            videoId,
+            startSeconds: savedTime > 0 ? savedTime : 0,
+          });
         } catch (e) {
           console.warn("YouTube loadVideoById error", e);
         }
@@ -34,13 +46,24 @@ export default function YouTubePlayer() {
           width: "360",
           height: "220",
           videoId,
-          playerVars: { playsinline: 1, controls: 0, modestbranding: 1, rel: 0, origin: window.location.origin },
+          playerVars: {
+            playsinline: 1,
+            controls: 0,
+            modestbranding: 1,
+            rel: 0,
+            origin: window.location.origin,
+            start: Math.floor(savedTime),
+          },
           events: {
             onReady: ({ target }) => {
               ytPlayerRef.current = target;
               target.setVolume(Math.round(volume * 100));
-              target.playVideo();
+              if (savedTime > 0) {
+                target.seekTo(savedTime, true);
+              }
+              target.pauseVideo();
               setIsLoading(false);
+              setIsPlaying(false);
             },
             onAutoplayBlocked: () => {
               setIsPlaying(false);

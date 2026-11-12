@@ -11,15 +11,18 @@ import {
   Repeat1,
   Repeat2,
   Maximize2,
+  Heart,
 } from "lucide-react";
 import { formatDuration } from "../services/musicApi";
 import { useAudio } from "../context/AudioContext";
+import { useAuth } from "../context/AuthContext";
 import FullscreenPlayer from "./FullscreenPlayer";
 import YouTubePlayer from "./YouTubePlayer";
 
 export default function Player() {
   const [showMobileVolume, setShowMobileVolume] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { user, isTrackSaved, toggleSaveTrack } = useAuth();
 
   const {
     currentTrack,
@@ -114,6 +117,19 @@ export default function Player() {
                 {currentTrack.artist}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => toggleSaveTrack(currentTrack)}
+              aria-label={isTrackSaved(currentTrack.id) ? `Hapus ${currentTrack.title} dari koleksi` : `Simpan ${currentTrack.title} ke koleksi`}
+              title={isTrackSaved(currentTrack.id) ? "Hapus dari lagu tersimpan" : "Simpan lagu"}
+              className={`shrink-0 p-2 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                isTrackSaved(currentTrack.id)
+                  ? "text-emerald-400 hover:text-emerald-300"
+                  : "text-slate-400 hover:text-emerald-400"
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${isTrackSaved(currentTrack.id) ? "fill-current" : ""}`} />
+            </button>
 
           </div>
 

@@ -1,9 +1,17 @@
 import React, { useState } from "react";
-import { Play, Pause, Music } from "lucide-react";
+import { Play, Pause, Music, Heart } from "lucide-react";
 import { formatDuration } from "../services/musicApi";
+import { useAuth } from "../context/AuthContext";
 
 export default function TrackCard({ track, isCurrent, isPlaying, onPlayTrack }) {
   const [imageError, setImageError] = useState(false);
+  const { isTrackSaved, toggleSaveTrack } = useAuth();
+  const isSaved = isTrackSaved(track.id);
+
+  const handleSaveClick = (e) => {
+    e.stopPropagation();
+    toggleSaveTrack(track);
+  };
 
   const hasValidPreview =
     typeof track.previewDuration === "number" &&
@@ -73,6 +81,20 @@ export default function TrackCard({ track, isCurrent, isPlaying, onPlayTrack }) 
           </div>
         </div>
 
+        {/* Tombol Simpan — pojok kanan atas artwork, selalu terlihat */}
+        <button
+          type="button"
+          onClick={handleSaveClick}
+          aria-label={isSaved ? `Hapus ${track.title} dari koleksi` : `Simpan ${track.title} ke koleksi`}
+          className={`absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-lg backdrop-blur-md border ${
+            isSaved
+              ? "bg-emerald-500/90 border-emerald-400/60 text-white scale-100"
+              : "bg-black/50 border-white/10 text-slate-300 opacity-0 group-hover:opacity-100 hover:bg-black/70 hover:text-emerald-400"
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${isSaved ? "fill-white" : ""}`} />
+        </button>
+
 
 
         {/* Preview Duration badge */}
@@ -103,17 +125,17 @@ export default function TrackCard({ track, isCurrent, isPlaying, onPlayTrack }) 
         </div>
 
         <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.05] text-[11px] text-slate-500">
-            {track.album && (
-              <span className="truncate max-w-[120px]">{track.album}</span>
-            )}
-            {typeof track.duration === "number" && track.duration > 0 && (
-              <span
-                className="font-mono text-slate-400 shrink-0"
-                title={`Durasi lagu penuh: ${formatDuration(track.duration)}`}
-              >
-                Full {formatDuration(track.duration)}
-              </span>
-            )}
+          {track.album && (
+            <span className="truncate max-w-[100px]">{track.album}</span>
+          )}
+          {typeof track.duration === "number" && track.duration > 0 && (
+            <span
+              className="font-mono text-slate-400 ml-auto"
+              title={`Durasi lagu penuh: ${formatDuration(track.duration)}`}
+            >
+              {formatDuration(track.duration)}
+            </span>
+          )}
         </div>
       </div>
     </div>

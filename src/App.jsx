@@ -6,6 +6,8 @@ import TrackCard from "./components/TrackCard";
 import Player from "./components/Player";
 import ViewTabs from "./components/ViewTabs";
 import ViralSoundsView from "./components/ViralSoundsView";
+import AuthModal from "./components/AuthModal";
+import SavedTracksPanel from "./components/SavedTracksPanel";
 import { fetchTopCharts, searchTracks, GENRE_PRESETS } from "./services/musicApi";
 import { useAudio } from "./context/AudioContext";
 import { Sparkles, TrendingUp, Music2, AlertCircle, Play, Pause } from "lucide-react";
@@ -19,6 +21,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(GENRE_PRESETS[0]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [savedPanelOpen, setSavedPanelOpen] = useState(false);
 
   // Audio Context Engine
   const { currentTrack, isPlaying, playTrack, togglePlay, setPlaylist } = useAudio();
@@ -119,6 +122,7 @@ export default function App() {
             setActiveTab("music");
           }}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenSavedTracks={() => setSavedPanelOpen(true)}
         />
 
         {/* Center Content + Right Panel Wrapper */}
@@ -296,6 +300,17 @@ export default function App() {
 
       {/* Floating Bottom Music Player */}
       <Player />
+
+      {/* Auth Modal (Login / Register) */}
+      <AuthModal />
+
+      {/* Saved Tracks Panel */}
+      {savedPanelOpen && (
+        <SavedTracksPanel
+          onClose={() => setSavedPanelOpen(false)}
+          onPlayTrack={(track) => { handlePlayTrack(track); setSavedPanelOpen(false); }}
+        />
+      )}
     </div>
   );
 }

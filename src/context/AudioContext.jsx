@@ -18,10 +18,29 @@ export function AudioProvider({ children }) {
   const youtubeSeekRef = useRef(null);
 
   // State
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [playlist, setPlaylist] = useState([]);
+  const [currentTrack, setCurrentTrack] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("irama_playback") || "null");
+      return saved?.track || null;
+    } catch {
+      return null;
+    }
+  });
+  const [playlist, setPlaylist] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("irama_playback") || "null")?.playlist || [];
+    } catch {
+      return [];
+    }
+  });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("irama_playback") || "null")?.currentTime || 0;
+    } catch {
+      return 0;
+    }
+  });
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.85);
   const [isMuted, setIsMuted] = useState(false);
@@ -58,6 +77,22 @@ export function AudioProvider({ children }) {
       playGen: playGenerationRef.current,
     };
   }, [currentTrack, playlist, isShuffle, repeatMode, isLoopSegment, volume, isMuted]);
+
+  useEffect(() => {
+    try {
+      if (currentTrack) {
+        const previous = JSON.parse(localStorage.getItem("irama_playback") || "null");
+        const sameTrack = previous?.track?.id === currentTrack.id;
+        localStorage.setItem("irama_playback", JSON.stringify({
+          track: currentTrack,
+          playlist,
+          currentTime: sameTrack ? Math.max(previous.currentTime || 0, currentTime) : currentTime,
+        }));
+      }
+    } catch {
+      // Kalau storage penuh/tidak tersedia, playback tetap berjalan.
+    }
+  }, [currentTrack, playlist, currentTime]);
 
   useEffect(() => {
     if (window.YT || document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) return;
@@ -415,10 +450,29 @@ export function AudioProvider({ children }) {
     playTrack(list[prevIdx]);
   }, [playTrack, safePlay]);
 
-  // Inisialisasi dan pasang event listener tunggal pada audio element saat mount
+  // Inisialisasi audio dan lanjutkan lagu serta posisi terakhir setelah refresh.
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
+
+    const savedTrack = stateRef.current.currentTrack;
+    if (savedTrack?.source !== "youtube") {
+      const savedUrl = savedTrack?.audioUrl || savedTrack?.previewUrl;
+      if (savedUrl) {
+        audio.src = savedUrl;
+        audio.addEventListener("loadedmetadata", () => {
+          try {
+            const savedTime = JSON.parse(localStorage.getItem("irama_playback") || "null")?.currentTime || 0;
+            if (savedTime > 0 && savedTime < audio.duration) {
+              audio.currentTime = savedTime;
+              setCurrentTime(savedTime);
+            }
+          } catch {
+            // Abaikan posisi tersimpan yang rusak.
+          }
+        }, { once: true });
+      }
+    }
 
     const isCurrentRequest = () => stateRef.current.playGen === playGenerationRef.current;
 

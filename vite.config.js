@@ -11,6 +11,14 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
+      '/api/auth': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/api/saved-tracks': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
       '/api/deezer': {
         target: 'https://api.deezer.com',
         changeOrigin: true,
