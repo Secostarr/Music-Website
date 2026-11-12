@@ -1,5 +1,5 @@
 import React from "react";
-import { Music, Search } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { GENRE_PRESETS } from "../services/musicApi";
 
 export default function Navbar({
@@ -8,6 +8,7 @@ export default function Navbar({
   onSearch,
   selectedCategory,
   onSelectCategory,
+  onOpenMobileMenu,
 }) {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,56 +16,70 @@ export default function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#050608]/80 backdrop-blur-xl border-b border-white/[0.07] px-4 sm:px-8 py-3.5 transition-colors">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Brand */}
-        <div
-          className="flex items-center gap-3 self-start md:self-auto cursor-pointer group"
-          onClick={() => onSelectCategory(GENRE_PRESETS[0])}
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#141724] border border-white/[0.08] flex items-center justify-center shadow-lg shadow-black/40 group-hover:border-purple-500/40 group-hover:shadow-purple-950/30 transition-all duration-300">
-            <Music className="w-5 h-5 text-purple-400 group-hover:text-purple-300 transition-colors" />
-          </div>
+    <header className="sticky top-0 z-30 bg-[#060907]/85 backdrop-blur-2xl border-b border-white/[0.06] px-4 sm:px-8 py-3.5 transition-colors">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left Side: Mobile Menu Button & Context Greeting */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenMobileMenu}
+            className="lg:hidden p-2 rounded-xl bg-[#0f1713] border border-white/[0.08] text-slate-300 hover:text-white hover:border-emerald-500/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            aria-label="Buka navigasi sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-              SoundVibe
-              <span className="text-[10px] font-mono tracking-wider font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-full uppercase">
-                Official Hits
+            <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight flex items-center gap-2">
+              Jelajah Musik
+              <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="hidden sm:inline text-xs font-mono font-normal text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                Top Chart
               </span>
             </h1>
-            <p className="text-xs text-slate-400">Mainstream Top Charts & Curated Audio</p>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSubmit} role="search" aria-label="Pencarian lagu" className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Cari lagu (contoh: Bernadya, Taylor Swift, Hindia)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Cari judul lagu atau nama artis"
-            className="w-full bg-[#0f111a]/90 text-sm text-slate-200 placeholder-slate-500 rounded-full pl-10 pr-4 py-2 border border-white/[0.08] focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/50 focus:bg-[#141724] transition-all shadow-inner"
-          />
+        {/* Right Side: Capsule Search Bar with Integrated Emerald Action Button */}
+        <form onSubmit={handleSubmit} className="flex-1 max-w-md ml-auto" role="search">
+          <div className="relative flex items-center bg-[#0f1713] hover:bg-[#14201a] focus-within:bg-[#14201a] border border-white/[0.08] focus-within:border-emerald-500/50 rounded-full p-1 pl-4 transition-all shadow-lg shadow-black/30 group">
+            <Search className="w-4 h-4 text-slate-400 group-focus-within:text-emerald-400 shrink-0 transition-colors" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari lagu, artis, atau album..."
+              aria-label="Cari lagu atau artis"
+              className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 px-3 py-1.5 focus:outline-none"
+            />
+            {/* Integrated Emerald Action Button */}
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium text-xs tracking-wide transition-all shadow-md shadow-emerald-950/50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 shrink-0"
+              aria-label="Lakukan pencarian musik"
+            >
+              Search
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* Categories / Genres */}
-      <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2.5 mt-2 scrollbar-none no-scrollbar">
-        {GENRE_PRESETS.map((item) => {
-          const isActive = selectedCategory?.name === item.name;
+      {/* Horizontal Genre Pills Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pt-3 pb-0.5 no-scrollbar">
+        {GENRE_PRESETS.map((category) => {
+          const isSelected = selectedCategory.name === category.name;
           return (
             <button
-              key={item.name}
-              onClick={() => onSelectCategory(item)}
-              className={`text-xs px-3.5 py-1.5 rounded-full font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? "bg-purple-600/90 text-white shadow-md shadow-purple-950/50 border border-purple-400/40"
-                  : "bg-[#0f111a]/80 text-slate-400 hover:text-slate-200 hover:bg-[#141724] border border-white/[0.06]"
+              key={category.name}
+              type="button"
+              onClick={() => onSelectCategory(category)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                isSelected
+                  ? "bg-emerald-500/90 text-white shadow-md shadow-emerald-950/50 border border-emerald-400/40"
+                  : "bg-[#0f1713]/80 hover:bg-[#14201a] text-slate-400 hover:text-slate-200 border border-white/[0.06]"
               }`}
             >
-              {item.name}
+              {category.name}
             </button>
           );
         })}

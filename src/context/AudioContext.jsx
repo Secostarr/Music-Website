@@ -14,6 +14,8 @@ const AudioContext = createContext(null);
 export function AudioProvider({ children }) {
   // Single HTMLAudioElement instance reference
   const audioRef = useRef(null);
+  const ytPlayerRef = useRef(null);
+  const youtubeSeekRef = useRef(null);
 
   // State
   const [currentTrack, setCurrentTrack] = useState(null);
@@ -57,8 +59,20 @@ export function AudioProvider({ children }) {
     };
   }, [currentTrack, playlist, isShuffle, repeatMode, isLoopSegment, volume, isMuted]);
 
+  useEffect(() => {
+    if (window.YT || document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
   // Handle Play Promise safely
   const safePlay = useCallback(async () => {
+    if (stateRef.current.currentTrack?.source === "youtube") {
+      ytPlayerRef.current?.playVideo?.();
+      return;
+    }
     const audio = audioRef.current;
     if (!audio) return;
     try {
@@ -78,6 +92,9 @@ export function AudioProvider({ children }) {
     if (audioRef.current) {
       audioRef.current.volume = stateRef.current.isMuted ? 0 : clamped;
     }
+    if (ytPlayerRef.current?.setVolume) {
+      ytPlayerRef.current.setVolume(Math.round(clamped * 100));
+    }
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -86,15 +103,17 @@ export function AudioProvider({ children }) {
       if (audioRef.current) {
         audioRef.current.volume = next ? 0 : stateRef.current.volume;
       }
+      if (ytPlayerRef.current) {
+        if (next) ytPlayerRef.current.mute?.();
+        else ytPlayerRef.current.unMute?.();
+      }
       return next;
     });
   }, []);
 
-  // Track playback starter
   const playTrack = useCallback(
     async (track, newPlaylist = null) => {
       if (!track) return;
-
       const audio = audioRef.current;
 
       // Perlindungan level engine: Track curated wajib lolos seluruh validator legal sebelum diputar
@@ -110,6 +129,26 @@ export function AudioProvider({ children }) {
         return;
       }
 
+      if (track.source === "youtube") {
+        const currentGen = ++playGenerationRef.current;
+        stateRef.current.playGen = currentGen;
+        setError(null);
+        if (audio) {
+          audio.pause();
+          audio.removeAttribute("src");
+          audio.load();
+        }
+        if (newPlaylist && Array.isArray(newPlaylist)) setPlaylist(newPlaylist);
+        setCurrentTime(0);
+        setDuration(track.duration || 0);
+        setCurrentTrack(track);
+        setIsLoading(true);
+        setIsPlaying(false);
+        if (ytPlayerRef.current?.loadVideoById) {
+          ytPlayerRef.current.loadVideoById(track.videoId);
+        }
+        return;
+      }
       if (!audio) return;
 
       const currentGen = ++playGenerationRef.current;
@@ -196,13 +235,36 @@ export function AudioProvider({ children }) {
   );
 
   const pause = useCallback(() => {
+    if (currentTrack?.source === "youtube") {
+      try {
+        if (ytPlayerRef.current?.pauseVideo) ytPlayerRef.current.pauseVideo();
+        else console.warn("YouTube player belum siap; pause tidak bisa dikirim");
+      } catch (err) {
+        console.warn("YouTube pause failed", err);
+      }
+      setIsPlaying(false);
+      setIsLoading(false);
+      return;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
     }
-  }, []);
+  }, [currentTrack]);
 
   const resume = useCallback(async () => {
+    if (currentTrack?.source === "youtube") {
+      try {
+        if (ytPlayerRef.current?.playVideo) ytPlayerRef.current.playVideo();
+        else {
+          setIsLoading(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("YouTube play failed", err);
+      }
+      return;
+    }
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
     setIsLoading(true);
@@ -217,19 +279,19 @@ export function AudioProvider({ children }) {
       }
       setIsLoading(false);
     }
-  }, []);
+  }, [currentTrack]);
 
   const togglePlay = useCallback(() => {
-    if (isPlaying) {
-      pause();
-    } else {
-      if (currentTrack) {
-        resume();
-      }
-    }
-  }, [isPlaying, currentTrack, pause, resume]);
+    if (!currentTrack) return;
+    if (isPlaying || isLoading) pause();
+    else resume();
+  }, [isPlaying, isLoading, currentTrack, pause, resume]);
 
   const seek = useCallback((time) => {
+    if (stateRef.current.currentTrack?.source === "youtube") {
+      youtubeSeekRef.current?.(time);
+      return;
+    }
     const audio = audioRef.current;
     if (!audio) return;
     const track = stateRef.current.currentTrack;
@@ -302,6 +364,10 @@ export function AudioProvider({ children }) {
     if (!list || list.length === 0) return;
 
     if (list.length === 1) {
+      if (track?.source === "youtube") {
+        youtubeSeekRef.current?.(0);
+        return;
+      }
       if (audioRef.current) {
         const startPos =
           typeof track?.segmentStart === "number" && Number.isFinite(track.segmentStart)
@@ -329,6 +395,10 @@ export function AudioProvider({ children }) {
     if (!list || list.length === 0) return;
 
     if (list.length === 1) {
+      if (track?.source === "youtube") {
+        youtubeSeekRef.current?.(0);
+        return;
+      }
       if (audioRef.current) {
         const startPos =
           typeof track?.segmentStart === "number" && Number.isFinite(track.segmentStart)
@@ -528,6 +598,12 @@ export function AudioProvider({ children }) {
       toggleShuffle,
       toggleRepeat,
       setPlaylist,
+      ytPlayerRef,
+      youtubeSeekRef,
+      setCurrentTime,
+      setDuration,
+      setIsPlaying,
+      setIsLoading,
     }),
     [
       currentTrack,
