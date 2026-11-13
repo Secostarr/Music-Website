@@ -8,7 +8,6 @@ import {
   Radio,
   Disc3,
   X,
-  Headphones,
 } from "lucide-react";
 import { GENRE_PRESETS } from "../services/musicApi";
 
@@ -175,25 +174,25 @@ export default function Sidebar({
               type="button"
               onClick={() => handleNavClick("music", GENRE_PRESETS[8])}
               className={`w-full flex items-center gap-3.5 px-3.5 py-2 rounded-xl text-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                activeTab === "music" && selectedCategory.name === "Chill / Acoustic"
+                activeTab === "music" && selectedCategory.name === GENRE_PRESETS[8].name
                   ? "bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
               }`}
             >
-              <Headphones className="w-3.5 h-3.5 text-slate-500" />
-              <span>Chill Lounge</span>
+              <Disc3 className="w-3.5 h-3.5 text-slate-500" />
+              <span>{GENRE_PRESETS[8].name}</span>
             </button>
             <button
               type="button"
               onClick={() => handleNavClick("music", GENRE_PRESETS[9])}
               className={`w-full flex items-center gap-3.5 px-3.5 py-2 rounded-xl text-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                activeTab === "music" && selectedCategory.name === "Anime"
+                activeTab === "music" && selectedCategory.name === GENRE_PRESETS[9].name
                   ? "bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-slate-500" />
-              <span>Anime Soundtracks</span>
+              <span>{GENRE_PRESETS[9].name}</span>
             </button>
           </div>
         </div>

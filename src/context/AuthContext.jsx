@@ -9,6 +9,7 @@ const STORAGE_SAVED_TRACKS_KEY = "irama_saved_tracks";
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
+      if (!localStorage.getItem(STORAGE_TOKEN_KEY)) return null;
       const raw = localStorage.getItem(STORAGE_USER_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch {
@@ -24,14 +25,7 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const [savedTracks, setSavedTracks] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_SAVED_TRACKS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [savedTracks, setSavedTracks] = useState([]);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState("login"); // 'login' | 'register'
@@ -55,8 +49,9 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_SAVED_TRACKS_KEY, JSON.stringify(savedTracks));
-  }, [savedTracks]);
+    if (user) localStorage.setItem(STORAGE_SAVED_TRACKS_KEY, JSON.stringify(savedTracks));
+    else localStorage.removeItem(STORAGE_SAVED_TRACKS_KEY);
+  }, [savedTracks, user]);
 
   // Sync saved tracks dari server jika login
   const fetchServerSavedTracks = useCallback(async (authToken) => {
@@ -71,12 +66,17 @@ export function AuthProvider({ children }) {
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.tracks)) {
-          setSavedTracks(data.tracks);
-        }
+        if (Array.isArray(data.tracks)) setSavedTracks(data.tracks);
+      } else if (res.status === 401) {
+        setUser(null);
+        setToken(null);
+        setSavedTracks([]);
+      } else {
+        throw new Error(`Sinkronisasi koleksi gagal (${res.status})`);
       }
     } catch (err) {
       console.warn("Sinkronisasi koleksi server gagal, menggunakan cache lokal:", err);
+      setAuthError("Gagal menyinkronkan lagu tersimpan dari server.");
     }
   }, [token]);
 
@@ -111,6 +111,7 @@ export function AuthProvider({ children }) {
 
     setUser(data.user);
     setToken(data.token);
+    setSavedTracks([]);
 
     // Ambil koleksi tersimpan milik user ini
     await fetchServerSavedTracks(data.token);
@@ -139,6 +140,7 @@ export function AuthProvider({ children }) {
 
     setUser(data.user);
     setToken(data.token);
+    setSavedTracks([]);
 
     if (pendingSaveTrack) {
       await saveTrackToServer(pendingSaveTrack, data.token);
@@ -167,56 +169,46 @@ export function AuthProvider({ children }) {
     setSavedTracks([]);
   }, [token]);
 
+  const [authError, setAuthError] = useState(null);
+
   const saveTrackToServer = async (track, activeToken) => {
     const authToken = activeToken || token;
-    // Update local state terlebih dahulu (optimistic)
-    setSavedTracks((prev) => {
-      if (prev.some((t) => t.id === track.id)) return prev;
-      return [track, ...prev];
-    });
+    if (!authToken) throw new Error("Silakan masuk untuk menyimpan lagu.");
 
-    if (authToken) {
-      try {
-        await fetch("/api/saved-tracks", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            track_id: track.id,
-            title: track.title,
-            artist: track.artist,
-            artwork: track.artwork || "",
-            duration: track.duration || 0,
-            album: track.album || "",
-            source: track.source || "youtube",
-            videoId: track.videoId || track.id,
-          }),
-        });
-      } catch (err) {
-        console.warn("Gagal menyimpan lagu ke cloud:", err);
-      }
-    }
+    const res = await fetch("/api/saved-tracks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        track_id: track.id,
+        title: track.title,
+        artist: track.artist,
+        artwork: track.artwork || "",
+        duration: track.duration || 0,
+        album: track.album || "",
+        source: track.source || "youtube",
+        videoId: track.videoId || track.id,
+      }),
+    });
+    if (!res.ok) throw new Error(`Gagal menyimpan lagu (${res.status}). Coba lagi.`);
+
+    setSavedTracks((prev) => prev.some((t) => t.id === track.id) ? prev : [track, ...prev]);
   };
 
   const removeTrackFromServer = async (trackId) => {
+    if (!token) throw new Error("Sesi login tidak tersedia. Silakan masuk kembali.");
+    const res = await fetch(`/api/saved-tracks/${encodeURIComponent(trackId)}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) throw new Error(`Gagal menghapus lagu (${res.status}). Coba lagi.`);
     setSavedTracks((prev) => prev.filter((t) => t.id !== trackId));
-
-    if (token) {
-      try {
-        await fetch(`/api/saved-tracks/${encodeURIComponent(trackId)}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-      } catch (err) {
-        console.warn("Gagal menghapus lagu dari cloud:", err);
-      }
-    }
   };
 
   // Toggle save: jika belum login, buka modal login dan simpan target lagu
@@ -228,11 +220,13 @@ export function AuthProvider({ children }) {
       }
 
       const isSaved = savedTracks.some((t) => t.id === track.id);
-      if (isSaved) {
-        removeTrackFromServer(track.id);
-      } else {
-        saveTrackToServer(track, token);
-      }
+      const mutation = isSaved
+        ? removeTrackFromServer(track.id)
+        : saveTrackToServer(track, token);
+      mutation.catch((err) => {
+        console.error("Perubahan koleksi gagal:", err);
+        setAuthError(err.message || "Perubahan koleksi gagal. Coba lagi.");
+      });
       return true;
     },
     [user, savedTracks, token, openAuthModal]
@@ -251,6 +245,8 @@ export function AuthProvider({ children }) {
         user,
         token,
         savedTracks,
+        authError,
+        clearAuthError: () => setAuthError(null),
         isAuthModalOpen,
         authModalMode,
         pendingSaveTrack,

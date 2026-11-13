@@ -22,7 +22,7 @@ import YouTubePlayer from "./YouTubePlayer";
 export default function Player() {
   const [showMobileVolume, setShowMobileVolume] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { user, isTrackSaved, toggleSaveTrack } = useAuth();
+  const { isTrackSaved, toggleSaveTrack } = useAuth();
 
   const {
     currentTrack,
@@ -32,6 +32,7 @@ export default function Player() {
     volume,
     isMuted,
     isLoading,
+    error,
     isShuffle,
     repeatMode,
     isLoopSegment,
@@ -103,6 +104,7 @@ export default function Player() {
               </div>
             </div>
             <div className="overflow-hidden flex-1 min-w-0">
+              {error && <p role="status" className="text-[10px] text-red-300 truncate mb-0.5" title={error}>{error}</p>}
               <h4
                 className="text-xs sm:text-sm font-bold text-slate-100 truncate tracking-tight hover:text-emerald-300 transition-colors cursor-pointer"
                 title={currentTrack.title}

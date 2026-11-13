@@ -3,7 +3,7 @@ import { useAudio } from "../context/AudioContext";
 
 export default function YouTubePlayer() {
   const hostRef = useRef(null);
-  const { currentTrack, volume, setCurrentTime, setDuration, setIsPlaying, setIsLoading, ytPlayerRef, youtubeSeekRef, nextTrack } = useAudio();
+  const { currentTrack, volume, setCurrentTime, setDuration, setIsPlaying, setIsLoading, setError, ytPlayerRef, youtubeSeekRef, nextTrack } = useAudio();
 
   useEffect(() => {
     const track = currentTrack;
@@ -30,14 +30,21 @@ export default function YouTubePlayer() {
           return null;
         }
       })();
-      const savedTime = playback?.track?.videoId === videoId ? playback.currentTime || 0 : 0;
+      const isRestoring = Boolean(track._restoredPlayback) && playback?.track?.videoId === videoId;
+      const savedTime = isRestoring ? playback.currentTime || 0 : 0;
 
       if (ytPlayerRef.current?.loadVideoById) {
         try {
           ytPlayerRef.current.loadVideoById({
             videoId,
-            startSeconds: savedTime > 0 ? savedTime : 0,
+            startSeconds: savedTime,
           });
+          if (isRestoring) {
+            ytPlayerRef.current.pauseVideo?.();
+            setIsPlaying(false);
+          } else {
+            ytPlayerRef.current.playVideo?.();
+          }
         } catch (e) {
           console.warn("YouTube loadVideoById error", e);
         }
@@ -53,32 +60,42 @@ export default function YouTubePlayer() {
             rel: 0,
             origin: window.location.origin,
             start: Math.floor(savedTime),
+            vq: "tiny", // 144p — hemat kuota ~60%, video tetap ada tapi tidak ditampilkan
           },
           events: {
             onReady: ({ target }) => {
               ytPlayerRef.current = target;
               target.setVolume(Math.round(volume * 100));
+              // Force 144p — vq param sering diabaikan, ini memastikan resolusi terendah
+              target.setPlaybackQuality?.("tiny");
               if (savedTime > 0) {
                 target.seekTo(savedTime, true);
               }
-              target.pauseVideo();
+              if (isRestoring) {
+                target.pauseVideo();
+                setIsPlaying(false);
+              } else {
+                target.playVideo();
+              }
               setIsLoading(false);
-              setIsPlaying(false);
             },
             onAutoplayBlocked: () => {
               setIsPlaying(false);
               setIsLoading(false);
             },
             onStateChange: ({ data, target }) => {
+              if (data === window.YT.PlayerState.PLAYING) target.setPlaybackQuality?.("tiny");
               setIsPlaying(data === window.YT.PlayerState.PLAYING);
               setIsLoading(data === window.YT.PlayerState.BUFFERING);
               const actualDuration = target.getDuration();
               if (Number.isFinite(actualDuration) && actualDuration > 0) setDuration(actualDuration);
               if (data === window.YT.PlayerState.ENDED) nextTrack();
             },
-            onError: () => {
+            onError: (err) => {
               setIsLoading(false);
               setIsPlaying(false);
+              setError?.("Video tidak dapat diputar atau dibatasi.");
+              console.warn("YouTube player error", err);
             },
           },
         });
@@ -106,7 +123,7 @@ export default function YouTubePlayer() {
       window.clearInterval(apiWait);
       window.clearInterval(progress);
     };
-  }, [currentTrack?.videoId, currentTrack?.source, nextTrack, setCurrentTime, setDuration, setIsLoading, setIsPlaying, ytPlayerRef, youtubeSeekRef]);
+  }, [currentTrack?.videoId, currentTrack?.source, nextTrack, setCurrentTime, setDuration, setIsLoading, setIsPlaying, setError, ytPlayerRef, youtubeSeekRef]);
 
   useEffect(() => {
     if (ytPlayerRef.current?.setVolume) {

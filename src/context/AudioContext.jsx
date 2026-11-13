@@ -21,7 +21,7 @@ export function AudioProvider({ children }) {
   const [currentTrack, setCurrentTrack] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("irama_playback") || "null");
-      return saved?.track || null;
+      return saved?.track ? { ...saved.track, _restoredPlayback: true } : null;
     } catch {
       return null;
     }
@@ -81,12 +81,14 @@ export function AudioProvider({ children }) {
   useEffect(() => {
     try {
       if (currentTrack) {
-        const previous = JSON.parse(localStorage.getItem("irama_playback") || "null");
-        const sameTrack = previous?.track?.id === currentTrack.id;
+        const stored = JSON.parse(localStorage.getItem("irama_playback") || "null");
+        const keepRestoredTime = stored?.track?.id === currentTrack.id && currentTime === 0 && stored.currentTime > 0;
+        const sanitizedTrack = { ...currentTrack };
+        delete sanitizedTrack._restoredPlayback;
         localStorage.setItem("irama_playback", JSON.stringify({
-          track: currentTrack,
+          track: sanitizedTrack,
           playlist,
-          currentTime: sameTrack ? Math.max(previous.currentTime || 0, currentTime) : currentTime,
+          currentTime: keepRestoredTime ? stored.currentTime : currentTime,
         }));
       }
     } catch {
@@ -147,8 +149,14 @@ export function AudioProvider({ children }) {
   }, []);
 
   const playTrack = useCallback(
-    async (track, newPlaylist = null) => {
-      if (!track) return;
+    async (rawTrack, newPlaylist = null) => {
+      if (!rawTrack) return;
+      let track = rawTrack;
+      if (track._restoredPlayback) {
+        const sanitized = { ...track };
+        delete sanitized._restoredPlayback;
+        track = sanitized;
+      }
       const audio = audioRef.current;
 
       // Perlindungan level engine: Track curated wajib lolos seluruh validator legal sebelum diputar
@@ -181,6 +189,7 @@ export function AudioProvider({ children }) {
         setIsPlaying(false);
         if (ytPlayerRef.current?.loadVideoById) {
           ytPlayerRef.current.loadVideoById(track.videoId);
+          ytPlayerRef.current.playVideo?.();
         }
         return;
       }
@@ -496,6 +505,13 @@ export function AudioProvider({ children }) {
       if (!isCurrentRequest()) return;
 
       const track = stateRef.current.currentTrack;
+      try {
+        const saved = JSON.parse(localStorage.getItem("irama_playback") || "null");
+        const resumeAt = saved?.track?.id === track?.id ? saved.currentTime || 0 : 0;
+        if (resumeAt > 0 && resumeAt < audio.duration) audio.currentTime = resumeAt;
+      } catch {
+        // Abaikan posisi pemutaran yang rusak.
+      }
       // Gunakan media duration aktual dari audio element jika valid dan finite
       const mediaDur =
         audio.duration && Number.isFinite(audio.duration) && audio.duration > 0
@@ -636,6 +652,7 @@ export function AudioProvider({ children }) {
       isMuted,
       isLoading,
       error,
+      setError,
       isShuffle,
       repeatMode,
       isLoopSegment,
@@ -669,6 +686,7 @@ export function AudioProvider({ children }) {
       isMuted,
       isLoading,
       error,
+      setError,
       isShuffle,
       repeatMode,
       isLoopSegment,

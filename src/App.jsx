@@ -10,6 +10,7 @@ import AuthModal from "./components/AuthModal";
 import SavedTracksPanel from "./components/SavedTracksPanel";
 import { fetchTopCharts, searchTracks, GENRE_PRESETS } from "./services/musicApi";
 import { useAudio } from "./context/AudioContext";
+import { useAuth } from "./context/AuthContext";
 import { Sparkles, TrendingUp, Music2, AlertCircle, Play, Pause } from "lucide-react";
 
 export default function App() {
@@ -22,12 +23,15 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(GENRE_PRESETS[0]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [savedPanelOpen, setSavedPanelOpen] = useState(false);
+  const searchRequestIdRef = React.useRef(0);
 
   // Audio Context Engine
   const { currentTrack, isPlaying, playTrack, togglePlay, setPlaylist } = useAudio();
+  const { authError, clearAuthError } = useAuth();
 
   const loadCategoryTracks = useCallback(
     async (category) => {
+      const requestId = ++searchRequestIdRef.current;
       setLoading(true);
       setError(null);
       try {
@@ -37,15 +41,17 @@ export default function App() {
         } else {
           data = await searchTracks(category.query);
         }
+        if (requestId !== searchRequestIdRef.current) return;
         setTracks(data);
         if (activeTab === "music") {
           setPlaylist(data);
         }
       } catch (err) {
+        if (requestId !== searchRequestIdRef.current) return;
         console.warn("Gagal memuat katalog lagu:", err);
         setError("Gagal memuat lagu. Coba pilih kategori lain atau periksa koneksi internet.");
       } finally {
-        setLoading(false);
+        if (requestId === searchRequestIdRef.current) setLoading(false);
       }
     },
     [activeTab, setPlaylist]
@@ -62,18 +68,21 @@ export default function App() {
       return;
     }
     // Pencarian bersifat universal: otomatis beralih ke tab musik untuk menampilkan hasil
+    const requestId = ++searchRequestIdRef.current;
     setActiveTab("music");
     setLoading(true);
     setError(null);
     try {
       const results = await searchTracks(searchQuery);
+      if (requestId !== searchRequestIdRef.current) return;
       setTracks(results);
       setPlaylist(results);
     } catch (err) {
+      if (requestId !== searchRequestIdRef.current) return;
       console.warn("Gagal melakukan pencarian lagu:", err);
       setError("Gagal melakukan pencarian lagu.");
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestIdRef.current) setLoading(false);
     }
   };
 
@@ -297,6 +306,15 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {authError && (
+        <div role="alert" className="fixed bottom-28 right-5 z-[130] max-w-sm rounded-xl border border-red-400/30 bg-[#25110f] px-4 py-3 text-sm text-red-100 shadow-xl">
+          <div className="flex items-start gap-3">
+            <span className="flex-1">{authError}</span>
+            <button type="button" onClick={clearAuthError} aria-label="Tutup pesan" className="text-red-200 hover:text-white">×</button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bottom Music Player */}
       <Player />
