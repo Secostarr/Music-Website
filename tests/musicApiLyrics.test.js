@@ -15,6 +15,9 @@ test("LRCLIB fallback is wired to both deployed and local music search APIs", ()
 });
 
 test("API upgrades low-resolution YouTube thumbnail URL variants", () => {
-  assert.ok(searchFunction.includes('replace("w60-h60", "w1200-h1200")'));
-  assert.ok(localSearch.includes('replace("w60-h60", "w1200-h1200")'));
+  for (const source of [searchFunction, localSearch]) {
+    // CDN memakai "=w60-h60", ytimg memakai "/w60-h60" — pola harus tanpa awalan.
+    assert.ok(source.includes('re.sub(r"w\\d+-h\\d+"'));
+    assert.ok(source.includes("maxresdefault"));
+  }
 });

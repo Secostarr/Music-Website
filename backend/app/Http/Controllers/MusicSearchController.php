@@ -40,6 +40,9 @@ class MusicSearchController extends Controller
                 'SystemRoot' => env('SYSTEMROOT', 'C:\\Windows'),
                 'SYSTEMROOT' => env('SYSTEMROOT', 'C:\\Windows'),
                 'PATH' => getenv('PATH') ?: '',
+                'TEMP' => sys_get_temp_dir(),
+                'TMP' => sys_get_temp_dir(),
+                'PYTHONPATH' => env('YTMUSIC_PYTHONPATH', ''),
             ]);
             $result = Process::path(base_path())->timeout(30)->env($env)->run(array_merge([$python, $script], $arguments));
         } catch (Throwable $error) {

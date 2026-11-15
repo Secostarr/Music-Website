@@ -31,15 +31,13 @@ class SavedTrackController extends Controller
             'videoId'  => ['nullable', 'string', 'max:30'],
         ]);
 
-        // Idempoten: jangan duplikat
-        $existing = $request->user()->savedTracks()->where('track_id', $validated['track_id'])->first();
-        if ($existing) {
-            return response()->json(['track' => $this->serialize($existing)], 200);
-        }
+        // Idempoten: unique index (user_id, track_id) mencegah duplikat walau dua request berlomba
+        $saved = $request->user()->savedTracks()->firstOrCreate(
+            ['track_id' => $validated['track_id']],
+            $validated
+        );
 
-        $saved = $request->user()->savedTracks()->create($validated);
-
-        return response()->json(['track' => $this->serialize($saved)], 201);
+        return response()->json(['track' => $this->serialize($saved)], $saved->wasRecentlyCreated ? 201 : 200);
     }
 
     public function destroy(Request $request, string $trackId): JsonResponse

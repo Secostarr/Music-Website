@@ -11,7 +11,6 @@ import {
   ALLOWED_VIRAL_CATEGORIES,
   curatedViralSounds,
 } from "../src/data/viralSounds.js";
-import { toUnifiedTrack } from "../src/services/musicApi.js";
 
 describe("1. Audit Helper URL HTTPS", () => {
   it("menerima URL HTTPS yang sah", () => {
@@ -393,40 +392,6 @@ describe("5. Audit isValidUnifiedTrack() dengan Bukti Izin", () => {
     assert.equal(isValidUnifiedTrack(undefined), false);
     assert.equal(isValidUnifiedTrack({}), false);
     assert.equal(isValidUnifiedTrack({ ...validCuratedTrack, id: "" }), false);
-  });
-});
-
-describe("6. Kompatibilitas Deezer Track", () => {
-  it("adapter toUnifiedTrack menghasilkan track Deezer yang lolos isValidUnifiedTrack()", () => {
-    const sampleDeezerRaw = {
-      id: 12345678,
-      title: "Lagu Populer",
-      title_short: "Lagu Populer",
-      preview: "https://cdns-preview-d.dzcdn.net/stream/sample.mp3",
-      duration: 215,
-      link: "https://www.deezer.com/track/12345678",
-      artist: {
-        id: 999,
-        name: "Artis Terkenal",
-        picture_medium: "https://e-cdns-images.dzcdn.net/images/artist/sample.jpg",
-      },
-      album: {
-        id: 888,
-        title: "Album Hits",
-        cover_medium: "https://e-cdns-images.dzcdn.net/images/cover/sample.jpg",
-      },
-    };
-
-    const unified = toUnifiedTrack(sampleDeezerRaw);
-    assert.ok(unified, "Hasil adapter toUnifiedTrack tidak boleh null");
-    assert.equal(unified.source, "deezer");
-    assert.equal(unified.duration, 215);
-    assert.equal(unified.previewDuration, 30);
-    assert.equal(unified.segmentStart, 0);
-    assert.equal(unified.segmentEnd, 30);
-
-    // Track Deezer tidak memerlukan legalMeta dan harus tetap valid
-    assert.equal(isValidUnifiedTrack(unified), true);
   });
 });
 

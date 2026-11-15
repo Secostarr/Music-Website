@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const AuthContext = createContext(null);
 
+const API_BASE = import.meta.env.VITE_API_BASE || "";
+
 const STORAGE_USER_KEY = "irama_user";
 const STORAGE_TOKEN_KEY = "irama_token";
 const STORAGE_SAVED_TRACKS_KEY = "irama_saved_tracks";
@@ -58,7 +60,7 @@ export function AuthProvider({ children }) {
     const activeToken = authToken || token;
     if (!activeToken) return;
     try {
-      const res = await fetch("/api/saved-tracks", {
+      const res = await fetch(`${API_BASE}/api/saved-tracks`, {
         headers: {
           Authorization: `Bearer ${activeToken}`,
           Accept: "application/json",
@@ -98,7 +100,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ email, password }),
@@ -126,7 +128,7 @@ export function AuthProvider({ children }) {
   }, [pendingSaveTrack, closeAuthModal, fetchServerSavedTracks]);
 
   const register = useCallback(async (name, email, password) => {
-    const res = await fetch("/api/auth/register", {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -153,7 +155,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     if (token) {
       try {
-        await fetch("/api/auth/logout", {
+        await fetch(`${API_BASE}/api/auth/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -175,7 +177,7 @@ export function AuthProvider({ children }) {
     const authToken = activeToken || token;
     if (!authToken) throw new Error("Silakan masuk untuk menyimpan lagu.");
 
-    const res = await fetch("/api/saved-tracks", {
+    const res = await fetch(`${API_BASE}/api/saved-tracks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -200,7 +202,7 @@ export function AuthProvider({ children }) {
 
   const removeTrackFromServer = async (trackId) => {
     if (!token) throw new Error("Sesi login tidak tersedia. Silakan masuk kembali.");
-    const res = await fetch(`/api/saved-tracks/${encodeURIComponent(trackId)}`, {
+    const res = await fetch(`${API_BASE}/api/saved-tracks/${encodeURIComponent(trackId)}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

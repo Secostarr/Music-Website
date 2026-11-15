@@ -14,24 +14,19 @@ export default function RightPanel({ tracks, onPlayTrack }) {
       className="w-72 xl:w-80 shrink-0 hidden xl:flex flex-col gap-6 py-6 pr-6 pl-2"
     >
       {/* Top Hits Highlight Box */}
-      <div className="rounded-3xl bg-[#0f1713]/80 border border-white/[0.08] p-5 shadow-xl relative overflow-hidden backdrop-blur-xl">
-        <div
-          aria-hidden="true"
-          className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"
-        />
-
+      <div className="rounded-2xl bg-[#15120f]/80 border border-white/[0.08] p-5 shadow-xl relative overflow-hidden backdrop-blur-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-slate-100 tracking-tight">Top Charts</h3>
+            <Flame className="w-4 h-4 text-stone-500" />
+            <h3 className="text-sm font-bold text-stone-100 tracking-tight">Top Charts</h3>
           </div>
-          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+          <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
             Live Streaming
           </span>
         </div>
 
         {trendingList.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-500">
+          <div className="py-8 text-center text-xs text-stone-500">
             Memuat daftar teratas...
           </div>
         ) : (
@@ -50,21 +45,21 @@ export default function RightPanel({ tracks, onPlayTrack }) {
                       onPlayTrack(track);
                     }
                   }}
-                  className={`group flex items-center justify-between p-2 rounded-2xl cursor-pointer transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  className={`group flex items-center justify-between p-2 rounded-2xl cursor-pointer transition-all border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9141f] ${
                     isCurrent
-                      ? "bg-[#14201a] border-emerald-500/40 shadow-sm shadow-emerald-950/40"
+                      ? "bg-[#1d1915] border-[#d9141f]/40 shadow-sm shadow-[#59060b]/40"
                       : "bg-transparent hover:bg-white/[0.04] border-transparent"
                   }`}
                   aria-label={`${track.title} oleh ${track.artist}. ${isCurrent && isPlaying ? "Jeda" : "Putar"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
                     {/* Rank index */}
-                    <span className="text-xs font-mono font-bold text-slate-500 w-4 text-center">
+                    <span className="text-xs font-mono font-bold text-stone-500 w-4 text-center">
                       #{idx + 2}
                     </span>
 
                     {/* Thumbnail */}
-                    <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[#060907] border border-white/[0.06]">
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[#080706] border border-white/[0.06]">
                       <img
                         src={track.artwork || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60"}
                         alt={track.title}
@@ -85,19 +80,19 @@ export default function RightPanel({ tracks, onPlayTrack }) {
                     <div className="min-w-0 flex-1">
                       <p
                         className={`text-xs font-semibold truncate ${
-                          isCurrent ? "text-emerald-300" : "text-slate-200 group-hover:text-emerald-300"
+                          isCurrent ? "text-[#f44551]" : "text-stone-200 group-hover:text-stone-100"
                         }`}
                         title={track.title}
                       >
                         {track.title}
                       </p>
-                      <p className="text-[11px] text-slate-400 truncate" title={track.artist}>
+                      <p className="text-[11px] text-stone-400 truncate" title={track.artist}>
                         {track.artist}
                       </p>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                  <span className="text-[10px] font-mono text-stone-500 shrink-0">
                     {track.duration ? formatDuration(track.duration) : "0:30"}
                   </span>
                 </div>
@@ -108,22 +103,22 @@ export default function RightPanel({ tracks, onPlayTrack }) {
       </div>
 
       {/* Audio Quality Box */}
-      <div className="rounded-3xl bg-gradient-to-br from-[#14201a]/90 to-[#0f1713]/80 border border-white/[0.08] p-5 shadow-xl relative overflow-hidden">
-        <div className="flex items-center gap-2 mb-2 text-emerald-300">
+      <div className="rounded-2xl bg-gradient-to-br from-[#1d1915]/90 to-[#15120f]/80 border border-white/[0.08] p-5 shadow-xl relative overflow-hidden">
+        <div className="flex items-center gap-2 mb-2 text-stone-400">
           <Sparkles className="w-4 h-4" />
           <span className="text-xs font-bold tracking-wide uppercase">Audio Quality</span>
         </div>
-        <h4 className="text-sm font-semibold text-slate-100 mb-1.5">
+        <h4 className="text-sm font-semibold text-stone-100 mb-1.5">
           High Quality Audio
         </h4>
-        <p className="text-xs text-slate-400 leading-relaxed mb-4">
+        <p className="text-xs text-stone-400 leading-relaxed mb-4">
           Streaming musik lancar langsung dari pemutar web.
         </p>
 
-        <div className="p-3 rounded-2xl bg-[#0a0f0d]/80 border border-white/[0.06] flex items-center justify-between text-xs font-mono text-slate-400">
+        <div className="p-3 rounded-2xl bg-[#0b0a09]/80 border border-white/[0.06] flex items-center justify-between text-xs font-mono text-stone-400">
           <span>Engine Status</span>
-          <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-stone-300 flex items-center gap-1 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-[#d9141f]" />
             Active
           </span>
         </div>

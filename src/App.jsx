@@ -11,7 +11,8 @@ import SavedTracksPanel from "./components/SavedTracksPanel";
 import { fetchTopCharts, searchTracks, GENRE_PRESETS } from "./services/musicApi";
 import { useAudio } from "./context/AudioContext";
 import { useAuth } from "./context/AuthContext";
-import { Sparkles, TrendingUp, Music2, AlertCircle, Play, Pause } from "lucide-react";
+import { TrendingUp, Music2, AlertCircle } from "lucide-react";
+import SongCoverflow from "./components/SongCoverflow";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("music"); // 'music' | 'viral'
@@ -23,7 +24,23 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(GENRE_PRESETS[0]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [savedPanelOpen, setSavedPanelOpen] = useState(false);
+  // Mode layout: 'dashboard' (3 zona) | 'fullscreen' (pemilihan lagu layar penuh)
+  const [layoutMode, setLayoutMode] = useState(() => {
+    try {
+      return localStorage.getItem("irama_layout") === "fullscreen" ? "fullscreen" : "dashboard";
+    } catch {
+      return "dashboard";
+    }
+  });
   const searchRequestIdRef = React.useRef(0);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("irama_layout", layoutMode);
+    } catch {
+      // Storage tidak tersedia: mode tetap berlaku selama sesi.
+    }
+  }, [layoutMode]);
 
   // Audio Context Engine
   const { currentTrack, isPlaying, playTrack, togglePlay, setPlaylist } = useAudio();
@@ -97,28 +114,30 @@ export default function App() {
   const featuredTrack = tracks[0];
 
   return (
-    <div className="min-h-screen bg-[#060907] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#0b0a09] text-stone-100 flex flex-col">
       {/* 3-Zone Architecture: Left Sidebar */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          if (tab === "music" && tracks.length > 0) {
-            setPlaylist(tracks);
-          }
-        }}
-        selectedCategory={selectedCategory}
-        onSelectCategory={(category) => {
-          setSelectedCategory(category);
-          setSearchQuery("");
-          setActiveTab("music");
-        }}
-        isOpenMobile={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
-      />
+      {layoutMode === "dashboard" && (
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            if (tab === "music" && tracks.length > 0) {
+              setPlaylist(tracks);
+            }
+          }}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(category) => {
+            setSelectedCategory(category);
+            setSearchQuery("");
+            setActiveTab("music");
+          }}
+          isOpenMobile={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       {/* Main Layout Container: Offset from Left Sidebar on Desktop */}
-      <div className="flex-1 flex flex-col lg:pl-64 xl:pl-72 transition-all">
+      <div className={`flex-1 flex flex-col transition-all ${layoutMode === "dashboard" ? "lg:pl-64 xl:pl-72" : ""}`}>
         {/* Top Navbar */}
         <Navbar
           searchQuery={searchQuery}
@@ -132,10 +151,12 @@ export default function App() {
           }}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           onOpenSavedTracks={() => setSavedPanelOpen(true)}
+          layoutMode={layoutMode}
+          onToggleLayout={() => setLayoutMode(layoutMode === "dashboard" ? "fullscreen" : "dashboard")}
         />
 
         {/* Center Content + Right Panel Wrapper */}
-        <div className="flex-1 flex w-full pb-32">
+        <div className="flex-1 flex w-full pb-40 md:pb-32">
           {/* Main Content Area */}
           <main className="flex-1 min-w-0 px-4 sm:px-8 py-6 w-full">
             {/* Navigasi Tab Utama */}
@@ -149,98 +170,49 @@ export default function App() {
             {/* Tab Katalog Musik Populer */}
             {activeTab === "music" && (
               <section id="panel-music" role="tabpanel" aria-labelledby="tab-music">
-                {/* Cinematic Hero Showcase */}
+                {/* Hero ala lolawilde: judul poster + karosel 3D lagu hits (geser/drag) */}
                 {featuredTrack && !loading && (
-                  <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#14231b] via-[#0f1713] to-[#060907] border border-white/[0.08] p-6 sm:p-8 lg:p-10 mb-8 shadow-2xl transition-all">
-                    {/* Atmospheric Lighting Orbs */}
+                  <section className="relative -mx-4 sm:-mx-8 px-4 sm:px-8 pt-2 pb-8 overflow-hidden" aria-label="Lagu populer saat ini">
                     <div
                       aria-hidden="true"
-                      className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"
+                      className="absolute left-1/2 bottom-[-18vh] w-[120vw] h-[70vh] -translate-x-1/2 pointer-events-none"
+                      style={{ background: "radial-gradient(ellipse at center, rgba(200,130,58,.16), transparent 62%)" }}
                     />
-                    <div
-                      aria-hidden="true"
-                      className="absolute -bottom-28 -left-28 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl pointer-events-none"
-                    />
-
-                    <div className="relative z-10 flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-8">
-                      {/* Left Editorial Info */}
-                      <div className="max-w-xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 mb-4 tracking-wider uppercase">
-                          <Sparkles className="w-3.5 h-3.5" /> Spotlight Release
-                        </div>
-
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight line-clamp-2">
-                          {featuredTrack.title}
-                        </h2>
-
-                        <p className="text-sm sm:text-base text-slate-300 mt-3 line-clamp-2 leading-relaxed">
-                          Dengarkan karya unggulan dari{" "}
-                          <span className="font-bold text-emerald-300">
-                            {featuredTrack.artist}
-                          </span>
-                          {featuredTrack.album && (
-                            <span className="text-slate-400"> dalam album {featuredTrack.album}</span>
-                          )}
-                          . Dengarkan berbagai lagu hits terpopuler saat ini.
-                        </p>
-
-                        {/* CTA Buttons */}
-                        <div className="flex flex-wrap items-center gap-4 mt-7">
-                          <button
-                            type="button"
-                            onClick={() => handlePlayTrack(featuredTrack)}
-                            className="px-7 py-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm transition-all shadow-xl shadow-emerald-950/70 border border-emerald-400/40 flex items-center gap-2.5 cursor-pointer transform hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-                          >
-                            {currentTrack?.id === featuredTrack.id && isPlaying ? (
-                              <>
-                                <Pause className="w-4 h-4 fill-white" />
-                                <span>Jeda lagu</span>
-                              </>
-                            ) : (
-                              <>
-                                <Play className="w-4 h-4 fill-white translate-x-0.5" />
-                                <span>Putar lagu</span>
-                              </>
-                            )}
-                          </button>
-
-                          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-white/[0.04] px-4 py-3 rounded-full border border-white/[0.06]">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            Audio Streaming Track
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Cinematic Hero Artwork Banner */}
-                      <div className="relative w-full sm:w-60 md:w-64 lg:w-72 aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/[0.1] shrink-0 bg-[#060907] group">
-                        <img
-                          src={
-                            featuredTrack.artwork ||
-                            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=60"
-                          }
-                          alt={featuredTrack.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                        <span className="absolute bottom-3 left-3 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-slate-300 border border-white/10">
-                          Now Trending
-                        </span>
-                      </div>
+                    <div className="relative z-10 text-center">
+                      <h1 className="font-display uppercase leading-[0.9] tracking-tight">
+                        <span className="block text-[#d9141f] text-[clamp(2.2rem,6vw,4.6rem)]">Lagu Hits</span>
+                        <span className="block text-[clamp(0.95rem,1.8vw,1.4rem)] mt-1">IramaNusantara</span>
+                      </h1>
+                      <p className="inline-flex items-center gap-2.5 mt-4 text-[13px] text-[rgba(243,238,231,.66)]">
+                        <span className="w-[7px] h-[7px] rounded-full bg-stone-500" />
+                        <span><b className="text-[#f3eee7] font-semibold">Sedang tren</b> — {tracks.length} lagu terpopuler minggu ini</span>
+                      </p>
                     </div>
-                  </div>
+                    <div className="relative z-10 mt-2">
+                      <SongCoverflow
+                        tracks={tracks}
+                        onPlay={handlePlayTrack}
+                        currentId={currentTrack?.id}
+                        isPlaying={isPlaying}
+                      />
+                    </div>
+                    <p className="relative z-10 mt-2 text-center text-xs text-[rgba(243,238,231,.38)]">
+                      Geser kartu untuk menjelajah · ketuk kartu tengah untuk memutar
+                    </p>
+                  </section>
                 )}
 
                 {/* Section Title Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                    <TrendingUp className="w-5 h-5 text-stone-500" />
+                    <h2 className="font-display uppercase text-xl sm:text-3xl leading-[1.05] tracking-tight text-white">
                       {searchQuery
                         ? `Hasil Pencarian: "${searchQuery}"`
                         : `Katalog Musik: ${selectedCategory.name}`}
                     </h2>
                   </div>
-                  <span className="text-xs text-slate-400 font-mono bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.06]">
+                  <span className="text-xs text-stone-400 font-mono bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.06]">
                     {tracks.length} Lagu Tersedia
                   </span>
                 </div>
@@ -255,15 +227,15 @@ export default function App() {
 
                 {/* Loading Skeletons */}
                 {loading && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                  <div className="no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:overflow-visible">
                     {Array.from({ length: 12 }).map((_, index) => (
                       <div
                         key={index}
-                        className="bg-[#0f1713]/80 border border-white/[0.05] rounded-3xl p-3 animate-pulse"
+                        className="bg-[#15120f]/80 border border-white/[0.05] rounded-2xl p-2 sm:p-3 animate-pulse w-[calc((100vw-3.5rem)/3)] sm:w-[calc((100vw-5.5rem)/3)] max-w-[132px] md:w-[168px] lg:w-[184px] md:max-w-none shrink-0 snap-start"
                       >
-                        <div className="aspect-square w-full bg-[#14201a] rounded-2xl mb-3" />
-                        <div className="h-4 bg-[#14201a] rounded w-3/4 mb-2" />
-                        <div className="h-3 bg-[#14201a]/70 rounded w-1/2" />
+                        <div className="aspect-square w-full bg-[#1d1915] rounded-2xl mb-3" />
+                        <div className="h-4 bg-[#1d1915] rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-[#1d1915]/70 rounded w-1/2" />
                       </div>
                     ))}
                   </div>
@@ -271,7 +243,7 @@ export default function App() {
 
                 {/* Tracks Grid */}
                 {!loading && tracks.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                  <div className="no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory md:flex-wrap md:justify-center md:gap-4 md:overflow-visible">
                     {tracks.map((track) => (
                       <TrackCard
                         key={track.id}
@@ -286,12 +258,12 @@ export default function App() {
 
                 {/* Empty state */}
                 {!loading && tracks.length === 0 && !error && (
-                  <div className="text-center py-24 rounded-3xl bg-[#0f1713]/40 border border-white/[0.04]">
-                    <Music2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                    <h3 className="text-base font-semibold text-slate-300">
+                  <div className="text-center py-24 rounded-2xl bg-[#15120f]/40 border border-white/[0.04]">
+                    <Music2 className="w-12 h-12 text-stone-600 mx-auto mb-3" />
+                    <h3 className="text-base font-semibold text-stone-300">
                       Tidak ada lagu ditemukan
                     </h3>
-                    <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+                    <p className="text-sm text-stone-500 mt-1 max-w-sm mx-auto">
                       Coba cari dengan kata kunci artis, judul lagu lain, atau pilih kategori dari sidebar.
                     </p>
                   </div>
@@ -301,7 +273,7 @@ export default function App() {
           </main>
 
           {/* 3-Zone Architecture: Right Panel */}
-          {activeTab === "music" && (
+          {activeTab === "music" && layoutMode === "dashboard" && (
             <RightPanel tracks={tracks} onPlayTrack={handlePlayTrack} />
           )}
         </div>

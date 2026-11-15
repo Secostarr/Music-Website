@@ -110,9 +110,17 @@ if __name__ == "__main__":
         artists = item.get("artists") or []
         album = item.get("album") or {}
         thumbnails = item.get("thumbnails") or []
-        artwork = thumbnails[-1].get("url", "") if thumbnails else ""
+        if thumbnails:
+            # Ambil thumbnail terbesar, bukan elemen terakhir yang bisa berupa ikon kecil.
+            best = max(thumbnails, key=lambda t: (t.get("width") or 0) * (t.get("height") or 0))
+            artwork = best.get("url", "") or ""
+        else:
+            artwork = ""
         if artwork:
-            artwork = artwork.replace("w60-h60", "w1200-h1200").replace("w120-h120", "w1200-h1200")
+            # CDN YT Music memakai "=w60-h60", ytimg memakai "/w60-h60" — tangani keduanya.
+            artwork = re.sub(r"w\d+-h\d+", "w1200-h1200", artwork)
+        if not artwork:
+            artwork = "https://i.ytimg.com/vi/%s/maxresdefault.jpg" % video_id
         tracks.append({
             "id": video_id,
             "source": "youtube",

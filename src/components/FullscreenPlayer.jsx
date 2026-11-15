@@ -3,7 +3,7 @@ import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Repeat2,
   Volume2, VolumeX, Minimize2, Music2, Disc3, Heart, Loader2, ExternalLink,
 } from "lucide-react";
-import { fetchLyrics, formatDuration } from "../services/musicApi";
+import { fetchLyrics, formatDuration, artworkFor } from "../services/musicApi";
 import { useAudio } from "../context/AudioContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -93,18 +93,18 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
   }, [isOpen, activeIndex]);
 
   if (!isOpen || !currentTrack) return null;
-  const artwork = currentTrack.artwork || `https://i.ytimg.com/vi/${currentTrack.videoId}/maxresdefault.jpg`;
+  const artwork = artworkFor(currentTrack);
   const isSaved = isTrackSaved(currentTrack.id);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Pemutar musik layar penuh" className="fixed inset-0 z-[100] flex h-dvh flex-col overflow-hidden bg-[#080a09] text-white selection:bg-emerald-300/30">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_22%_8%,rgba(14,115,75,.28),transparent_42%),radial-gradient(ellipse_at_85%_90%,rgba(105,62,27,.18),transparent_42%)]" />
+    <div role="dialog" aria-modal="true" aria-label="Pemutar musik layar penuh" className="fixed inset-0 z-[100] flex h-dvh flex-col overflow-hidden bg-[#0b0a09] text-white selection:bg-[#d9141f]/40">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_22%_8%,rgba(200,130,58,.14),transparent_42%),radial-gradient(ellipse_at_85%_90%,rgba(105,62,27,.18),transparent_42%)]" />
       <header className="relative z-10 flex shrink-0 items-center justify-between px-5 py-4 sm:px-9">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-300/20 bg-emerald-300/10 text-emerald-300"><Music2 size={19} /></div>
-          <div><p className="text-[10px] font-semibold uppercase tracking-[.25em] text-emerald-300">IramaNusantara</p><p className="text-xs text-white/45">Now playing</p></div>
+          <div className="grid h-10 w-10 place-items-center rounded-xl border border-[#f44551]/20 bg-[#f44551]/10 text-[#f44551]"><Music2 size={19} /></div>
+          <div><p className="text-[10px] font-semibold uppercase tracking-[.25em] text-white/50">IramaNusantara</p><p className="text-xs text-white/45">Now playing</p></div>
         </div>
-        <button type="button" onClick={onClose} className="rounded-full border border-white/10 bg-white/[.04] px-4 py-2 text-xs text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"><Minimize2 size={14} className="mr-2 inline" />Tutup <span className="hidden sm:inline">(Esc)</span></button>
+        <button type="button" onClick={onClose} className="rounded-full border border-white/10 bg-white/[.04] px-4 py-2 text-xs text-white/70 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d9141f]"><Minimize2 size={14} className="mr-2 inline" />Tutup <span className="hidden sm:inline">(Esc)</span></button>
       </header>
 
       <main className="relative z-10 mx-auto grid min-h-0 w-full max-w-[1440px] flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden px-3 pb-3 sm:gap-5 sm:px-9 sm:pb-6 lg:grid-cols-[minmax(320px,460px)_1fr] lg:grid-rows-1 lg:gap-14 lg:px-14 lg:pb-8">
@@ -116,20 +116,20 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-white/[.04]" />
               <div className="absolute bottom-2 left-2 right-2 hidden items-end justify-between lg:flex lg:bottom-4 lg:left-4 lg:right-4">
                 <span className="rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-[10px] uppercase tracking-[.2em] text-white/75 backdrop-blur">Irama • Nusantara</span>
-                <button type="button" onClick={() => toggleSaveTrack(currentTrack)} aria-label={isSaved ? "Hapus lagu tersimpan" : "Simpan lagu"} className={`grid h-10 w-10 place-items-center rounded-full border backdrop-blur transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 ${isSaved ? "border-emerald-300/40 bg-emerald-400 text-black" : "border-white/20 bg-black/45 text-white"}`}><Heart size={18} className={isSaved ? "fill-current" : ""} /></button>
+                <button type="button" onClick={() => toggleSaveTrack(currentTrack)} aria-label={isSaved ? "Hapus lagu tersimpan" : "Simpan lagu"} className={`grid h-10 w-10 place-items-center rounded-full border backdrop-blur transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d9141f] ${isSaved ? "border-[#f44551]/40 bg-[#d9141f] text-black" : "border-white/20 bg-black/45 text-white"}`}><Heart size={18} className={isSaved ? "fill-current" : ""} /></button>
               </div>
             </div>
 
             <div className="min-w-0 flex-1 lg:mt-4 lg:flex-none">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="truncate text-sm font-bold tracking-tight sm:text-base lg:text-2xl">{currentTrack.title}</h1>
-                  <p className="truncate text-xs text-emerald-300 lg:mt-1 lg:text-sm">{currentTrack.artist}</p>
+                  <h1 className="truncate font-display text-base tracking-tight sm:text-lg lg:text-3xl">{currentTrack.title}</h1>
+                  <p className="truncate text-xs text-white/60 lg:mt-1 lg:text-sm">{currentTrack.artist}</p>
                   {currentTrack.album && <p className="hidden truncate text-xs text-white/45 lg:mt-1 lg:block">{currentTrack.album}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  {currentTrack.link && <a href={currentTrack.link} target="_blank" rel="noreferrer" aria-label="Buka sumber lagu" className="rounded-full p-2 text-white/45 hover:bg-white/10 hover:text-white"><ExternalLink size={15} /></a>}
-                  <button type="button" onClick={() => toggleSaveTrack(currentTrack)} aria-label={isSaved ? "Hapus lagu tersimpan" : "Simpan lagu"} className={`grid h-9 w-9 place-items-center rounded-full border lg:hidden ${isSaved ? "border-emerald-300/40 bg-emerald-400 text-black" : "border-white/15 text-white"}`}><Heart size={16} className={isSaved ? "fill-current" : ""} /></button>
+                  {currentTrack.link && <a href={currentTrack.link} target="_blank" rel="noreferrer" aria-label="Buka sumber lagu" className="rounded-full p-3 -m-1.5 text-white/45 hover:bg-white/10 hover:text-white"><ExternalLink size={15} /></a>}
+                  <button type="button" onClick={() => toggleSaveTrack(currentTrack)} aria-label={isSaved ? "Hapus lagu tersimpan" : "Simpan lagu"} className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border lg:hidden ${isSaved ? "border-[#f44551]/40 bg-[#d9141f] text-black" : "border-white/15 text-white"}`}><Heart size={16} className={isSaved ? "fill-current" : ""} /></button>
                 </div>
               </div>
             </div>
@@ -139,26 +139,26 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
           <div className="mt-2 shrink-0 rounded-xl border border-white/10 bg-white/[.03] p-2 backdrop-blur-md sm:p-3 lg:mt-4 lg:rounded-2xl lg:p-4">
             <div className="flex items-center gap-2 text-[9px] tabular-nums text-white/45 sm:gap-3 sm:text-xs">
               <span className="w-8 text-right">{formatDuration(currentTime)}</span>
-              <input type="range" min="0" max={duration || 30} step="0.1" value={currentTime} onChange={(event) => seek(parseFloat(event.target.value))} aria-label="Posisi pemutaran lagu" className="h-1.5 flex-1 cursor-pointer accent-emerald-400" />
+              <input type="range" min="0" max={duration || 30} step="0.1" value={currentTime} onChange={(event) => seek(parseFloat(event.target.value))} aria-label="Posisi pemutaran lagu" className="h-1.5 flex-1 cursor-pointer accent-[#d9141f]" />
               <span className="w-8">{formatDuration(duration)}</span>
             </div>
 
             <div className="mt-2 flex items-center justify-between sm:mt-3">
               <div className="flex items-center gap-1.5 sm:gap-3">
-                <button type="button" onClick={toggleShuffle} aria-label="Acak lagu" className={isShuffle ? "text-emerald-300" : "text-white/50 hover:text-white"}><Shuffle size={16} /></button>
-                <button type="button" onClick={toggleRepeat} aria-label="Mode ulang" className={repeatMode !== "off" ? "text-emerald-300" : "text-white/50 hover:text-white"}>{repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}</button>
-                <button type="button" onClick={toggleLoopSegment} aria-label="Ulangi segmen" className={isLoopSegment ? "text-emerald-300" : "text-white/35 hover:text-white"}><Repeat2 size={16} /></button>
+                <button type="button" onClick={toggleShuffle} aria-label="Acak lagu" className={`grid h-11 w-11 place-items-center rounded-xl ${isShuffle ? "text-[#f44551]" : "text-white/50 hover:text-white"}`}><Shuffle size={16} /></button>
+                <button type="button" onClick={toggleRepeat} aria-label="Mode ulang" className={`grid h-11 w-11 place-items-center rounded-xl ${repeatMode !== "off" ? "text-[#f44551]" : "text-white/50 hover:text-white"}`}>{repeatMode === "one" ? <Repeat1 size={16} /> : <Repeat size={16} />}</button>
+                <button type="button" onClick={toggleLoopSegment} aria-label="Ulangi segmen" className={`grid h-11 w-11 place-items-center rounded-xl ${isLoopSegment ? "text-[#f44551]" : "text-white/35 hover:text-white"}`}><Repeat2 size={16} /></button>
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
-                <button type="button" onClick={prevTrack} aria-label="Lagu sebelumnya" className="text-white/65 hover:text-white"><SkipBack size={17} fill="currentColor" /></button>
-                <button type="button" onClick={togglePlay} aria-label={isPlaying ? "Jeda" : "Putar"} className="grid h-9 w-9 place-items-center rounded-full bg-emerald-400 text-black shadow-[0_0_20px_rgba(52,211,153,.4)] transition hover:scale-105 disabled:opacity-60 sm:h-11 sm:w-11" disabled={isLoading}>{isLoading ? <Loader2 size={17} className="animate-spin" /> : isPlaying ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</button>
-                <button type="button" onClick={nextTrack} aria-label="Lagu berikutnya" className="text-white/65 hover:text-white"><SkipForward size={17} fill="currentColor" /></button>
+                <button type="button" onClick={prevTrack} aria-label="Lagu sebelumnya" className="grid h-11 w-11 place-items-center rounded-xl text-white/65 hover:text-white"><SkipBack size={17} fill="currentColor" /></button>
+                <button type="button" onClick={togglePlay} aria-label={isPlaying ? "Jeda" : "Putar"} className="grid h-11 w-11 place-items-center rounded-full bg-[#d9141f] text-black shadow-[0_0_20px_rgba(217,20,31,.35)] transition hover:scale-105 disabled:opacity-60 sm:h-11 sm:w-11" disabled={isLoading}>{isLoading ? <Loader2 size={17} className="animate-spin" /> : isPlaying ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</button>
+                <button type="button" onClick={nextTrack} aria-label="Lagu berikutnya" className="grid h-11 w-11 place-items-center rounded-xl text-white/65 hover:text-white"><SkipForward size={17} fill="currentColor" /></button>
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" onClick={toggleMute} aria-label={isMuted ? "Nyalakan suara" : "Bisukan suara"} className="text-white/50 hover:text-white">{isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
-                <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={(event) => setVolume(parseFloat(event.target.value))} aria-label="Volume" className="w-14 cursor-pointer accent-emerald-400 sm:w-18" />
+                <button type="button" onClick={toggleMute} aria-label={isMuted ? "Nyalakan suara" : "Bisukan suara"} className="grid h-11 w-11 place-items-center rounded-xl text-white/50 hover:text-white">{isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
+                <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={(event) => setVolume(parseFloat(event.target.value))} aria-label="Volume" className="w-14 cursor-pointer accent-[#d9141f] sm:w-18" />
               </div>
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
         {/* Kolom Kanan: Full Lirik Sync */}
         <section className="flex min-h-0 flex-col overflow-hidden border-t border-white/10 pt-2 lg:border-t-0 lg:border-l lg:pl-10 lg:pt-0" aria-label="Lirik lagu" aria-live="polite">
           <div className="mb-4 flex shrink-0 items-center gap-3">
-            <span className="h-4 w-1 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.6)]" />
+            <span className="h-4 w-1 rounded-full bg-[#d9141f]" />
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-[.24em] text-white/80">Lirik</h2>
               <p className="text-[10px] text-white/40">Sinkron otomatis dengan lagu</p>
@@ -193,7 +193,7 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") seek(startTime / 1000); }}
-                    className={`group relative flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left transition-[opacity,transform,color,background] duration-500 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 ${
+                    className={`group relative flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left transition-[opacity,transform,color,background] duration-500 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d9141f] ${
                       active
                         ? "scale-[1.02] bg-white/[.07] font-bold text-white shadow-[0_8px_32px_rgba(0,0,0,.25)]"
                         : "font-medium text-white/35 hover:bg-white/[.03] hover:text-white/75"
@@ -203,7 +203,7 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
                       aria-hidden="true"
                       className={`h-2.5 w-2.5 shrink-0 rounded-full transition-all duration-300 ${
                         active
-                          ? "scale-125 bg-emerald-300 shadow-[0_0_14px_rgba(52,211,153,.9)] animate-pulse"
+                          ? "scale-125 bg-[#f44551]"
                           : "bg-transparent group-hover:bg-white/20"
                       }`}
                     />
@@ -220,7 +220,7 @@ export default function FullscreenPlayer({ isOpen, onClose }) {
             </div>
           ) : (
             <div className="flex h-full min-h-[200px] items-center justify-center gap-3 text-sm text-white/50">
-              {lyricsError ? <><Music2 size={19} className="text-emerald-300" /><span>Lirik belum tersedia dari sumber API untuk lagu ini.</span></> : <><Loader2 size={18} className="animate-spin text-emerald-300" /><span>Mencari lirik lagu…</span></>}
+              {lyricsError ? <><Music2 size={19} className="text-[#f44551]" /><span>Lirik belum tersedia dari sumber API untuk lagu ini.</span></> : <><Loader2 size={18} className="animate-spin text-[#f44551]" /><span>Mencari lirik lagu…</span></>}
             </div>
           )}
         </section>

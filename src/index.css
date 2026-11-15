@@ -3,23 +3,22 @@
 :root {
   color-scheme: dark;
 
-  /* --- STAGE 5.1: CINEMATIC EMERALD MINT DESIGN TOKENS --- */
-  /* Background Hierarchy */
-  --color-void: #060907;
-  --color-background: #0a0f0d;
-  --color-surface: #0f1713;
-  --color-surface-elevated: #14201a;
+  /* Lolawilde palette: void hangat, permukaan cokelat gelap, aksen merah */
+  --color-void: #080706;
+  --color-background: #0b0a09;
+  --color-surface: #15120f;
+  --color-surface-elevated: #1d1915;
 
   /* Subtle Layer Borders */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.11);
-  --border-emerald-focus: rgba(16, 185, 129, 0.45);
+  --border-subtle: rgba(243, 238, 231, 0.07);
+  --border-strong: rgba(243, 238, 231, 0.11);
+  --border-emerald-focus: rgba(217, 20, 31, 0.45);
 
-  /* Cinematic Natural Accents (Spotify & Studio Green) */
-  --accent-primary-emerald: #10b981;
-  --accent-deep-emerald: #059669;
-  --accent-mint: #34d399;
-  --accent-ambient-emerald: rgba(16, 185, 129, 0.12);
+  /* Aksen lolawilde: merah sirene + amber hangat */
+  --accent-primary-emerald: #d9141f;
+  --accent-deep-emerald: #a01015;
+  --accent-mint: #c8823a;
+  --accent-ambient-emerald: rgba(217, 20, 31, 0.12);
 
   /* Typography Scale Colors */
   --text-primary: #f8fafc;
@@ -27,34 +26,46 @@
   --text-muted: #64748b;
 }
 
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
-  background-color: var(--color-void);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  overflow-x: hidden;
+  background-color: #0b0a09;
+  color: #f3eee7;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: clip;
+  max-width: 100%;
   min-height: 100vh;
   position: relative;
   /* Ambient spotlight halus di latar belakang tanpa blocking interaksi */
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.08), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 120%, rgba(5, 150, 105, 0.05), transparent 70%);
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(200, 130, 58, 0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 120%, rgba(200, 130, 58, 0.05), transparent 70%);
   background-attachment: fixed;
 }
 
+/* Typografi display (gaya poster lolawilde) */
+.font-display { font-family: "Archivo Black", "Arial Black", sans-serif; }
+
 /* Text Selection Styling */
 ::selection {
-  background-color: rgba(16, 185, 129, 0.35);
+  background-color: rgba(217, 20, 31, 0.5);
   color: #ffffff;
 }
 
 /* Global Focus-Visible Styling untuk Aksesibilitas Keyboard */
 :focus-visible {
-  outline: 2px solid var(--accent-primary-emerald);
+  outline: 2px solid #c8823a;
   outline-offset: 2px;
 }
 
 /* Custom Scrollbar - Menyatu dengan Palet Velvet Void */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -65,13 +76,148 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e2230;
+  background: #26211c;
   border-radius: 4px;
   border: 2px solid var(--color-void);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #31374a;
+  background: #3a332c;
+}
+
+/* --- SONG COVERFLOW (karosel 3D gaya lolawilde) --- */
+.sc {
+  --ch: min(52vh, 500px);
+  position: relative;
+  height: calc(var(--ch) + 24px);
+  perspective: 1500px;
+  perspective-origin: 50% 45%;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  border-radius: 22px;
+}
+.sc:focus-visible { outline-offset: 6px; }
+.sc.dragging { cursor: grabbing; }
+.sc-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ch) * 0.64);
+  height: var(--ch);
+  margin: calc(var(--ch) / -2) 0 0 calc(var(--ch) * -0.32);
+  border-radius: 22px;
+  overflow: hidden;
+  background: #1d1915;
+  transform-style: preserve-3d;
+  will-change: transform;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+}
+.sc-fb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.05);
+}
+.sc-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 30%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.65) 100%);
+  transition: opacity 0.4s;
+}
+.sc-card:not(.is-center) .sc-shade { background: rgba(0, 0, 0, 0.4); }
+.sc-n {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+}
+.sc-title {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 66px;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+.sc-artist {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 42px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-go {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translate(-50%, 8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.35s, transform 0.35s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sc-card.is-center .sc-go { opacity: 1; transform: translate(-50%, 0); }
+.sc-ui {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 14px 16px 6px;
+  font-size: 13px;
+  color: rgba(243, 238, 231, 0.66);
+}
+.sc-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(243, 238, 231, 0.12);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.sc-arrow:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.3); }
+.sc-arrow svg { width: 16px; height: 16px; }
+.sc-count { font-variant-numeric: tabular-nums; min-width: 120px; text-align: center; letter-spacing: 0.08em; }
+.sc-count b { color: #f3eee7; font-weight: 600; }
+.sc-now { font-style: normal; color: rgba(243, 238, 231, 0.38); }
+@media (max-width: 760px) {
+  .sc { --ch: min(46vh, 420px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot, .animate-pulse { animation: none !important; }
 }
 
 /* Custom Animations untuk Fullscreen Player & Studio Audio */

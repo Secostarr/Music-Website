@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Play, Pause, Music, Repeat2, Quote, ExternalLink } from "lucide-react";
-import { formatDuration } from "../services/musicApi";
+import { formatDuration, artworkCandidates } from "../services/musicApi";
 import { useAudio } from "../context/AudioContext";
 
 export default function ViralSoundCard({ sound }) {
-  const [imageError, setImageError] = useState(false);
+  // 0..n = kandidat sumber (artwork asli → maxres → sd → hq), melewati jumlah = placeholder
+  const [artStage, setArtStage] = useState(0);
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudio();
 
   const isCurrent = currentTrack?.id === sound.id;
@@ -34,42 +35,44 @@ export default function ViralSoundCard({ sound }) {
     ? sound.segmentEnd - sound.segmentStart
     : sound.previewDuration || 0;
 
-  const rawArtwork = typeof sound.artwork === "string" ? sound.artwork.trim() : "";
-  const hasValidArtwork = rawArtwork.length > 0 && !imageError;
+  const candidates = artworkCandidates(sound);
+  const artworkSrc = candidates[Math.min(artStage, candidates.length)] || "";
+  const hasValidArtwork = artStage < candidates.length && Boolean(artworkSrc);
+
+  const handleArtworkError = () => setArtStage((stage) => stage + 1);
 
   return (
     <div
       role="article"
       aria-label={`${sound.title} oleh ${sound.artist}`}
-      className={`group relative flex flex-col p-3 rounded-2xl transition-all duration-300 border ${
+      className={`group relative flex flex-col w-[calc((100vw-3.5rem)/2)] sm:w-[240px] max-w-[240px] md:w-[268px] lg:w-[300px] md:max-w-none shrink-0 snap-start p-3 rounded-2xl transition-all duration-300 border ${
         isCurrent
-          ? "bg-[#14201a] border-emerald-500/50 shadow-lg shadow-emerald-950/40"
-          : "bg-[#0f1713]/70 hover:bg-[#14201a] border-white/[0.06] hover:border-emerald-500/30 hover:shadow-md hover:shadow-emerald-950/20"
+          ? "bg-[#1d1915] border-[#d9141f]/50 shadow-lg shadow-[#59060b]/40"
+          : "bg-[#15120f]/70 hover:bg-[#1d1915] border-white/[0.06] hover:border-white/20 hover:shadow-md hover:shadow-[#59060b]/20"
       }`}
     >
       {/* Artwork & Play overlay */}
-      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-[#060907] mb-3 shadow-md border border-white/[0.04]">
+      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-[#080706] mb-3 shadow-md border border-white/[0.04]">
         {hasValidArtwork ? (
           <img
-            src={rawArtwork}
+            src={artworkSrc}
             alt={sound.title}
             loading="lazy"
-            onError={() => setImageError(true)}
+            onError={handleArtworkError}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0f0d] text-slate-500 p-2">
-            <Music className="w-8 h-8 text-emerald-500/40 mb-1" />
-            <span className="text-[10px] text-slate-500 text-center line-clamp-1">
-              Sound Viral
-            </span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-[radial-gradient(circle_at_50%_35%,#241d18,#0b0a09)] text-stone-600 p-2">
+            <Music className="w-6 h-6 sm:w-8 sm:h-8" aria-hidden="true" />
+            <span className="text-[10px] text-stone-400 text-center line-clamp-2 leading-tight">{sound.title}</span>
+            <span className="sr-only">Tidak ada gambar sampul</span>
           </div>
         )}
 
         {/* Kategori Badge */}
         {sound.viralMeta?.category && (
           <div className="absolute top-2 left-2 z-10">
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#060907]/85 backdrop-blur-md text-emerald-300 border border-emerald-500/30 shadow">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#080706]/85 backdrop-blur-md text-stone-300 border border-white/[0.08] shadow">
               {sound.viralMeta.category}
             </span>
           </div>
@@ -81,7 +84,7 @@ export default function ViralSoundCard({ sound }) {
             className="absolute top-2 right-2 z-10"
             title="Cuplikan hook reff yang dapat di-loop otomatis"
           >
-            <span className="p-1 rounded-md bg-[#060907]/85 backdrop-blur-md text-emerald-300 border border-emerald-500/30 flex items-center justify-center shadow">
+            <span className="p-1 rounded-md bg-[#080706]/85 backdrop-blur-md text-stone-300 border border-white/[0.08] flex items-center justify-center shadow">
               <Repeat2 className="w-3.5 h-3.5" />
             </span>
           </div>
@@ -89,8 +92,8 @@ export default function ViralSoundCard({ sound }) {
 
         {/* Play Button Overlay */}
         <div
-          className={`absolute inset-0 bg-[#060907]/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${
-            isCurrent ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          className={`absolute inset-0 bg-[#080706]/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300 ${
+            isCurrent ? "opacity-100" : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           }`}
         >
           <button
@@ -98,7 +101,7 @@ export default function ViralSoundCard({ sound }) {
             onClick={handlePlay}
             onKeyDown={handleKeyDown}
             aria-label={isCurrent && isPlaying ? "Jeda sound" : "Putar sound"}
-            className="w-12 h-12 rounded-full bg-emerald-500/95 hover:bg-emerald-400 text-white flex items-center justify-center shadow-lg shadow-emerald-950/60 border border-emerald-400/30 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 cursor-pointer"
+            className="w-12 h-12 rounded-full bg-[#d9141f]/95 hover:bg-[#d9141f] text-white flex items-center justify-center shadow-lg shadow-[#59060b]/60 border border-[#ef2430]/30 transition-transform active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9141f] cursor-pointer"
           >
             {isCurrent && isPlaying ? (
               <Pause className="w-5 h-5 fill-white" />
@@ -110,7 +113,7 @@ export default function ViralSoundCard({ sound }) {
 
         {/* Durasi Hook Reff */}
         {segmentDuration > 0 && (
-          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-[#060907]/85 backdrop-blur-md text-[10px] font-mono text-emerald-300 border border-emerald-500/20 z-10 pointer-events-none">
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-[#080706]/85 backdrop-blur-md text-[10px] font-mono text-stone-300 border border-white/[0.08] z-10 pointer-events-none">
             Hook {formatDuration(segmentDuration)}
           </div>
         )}
@@ -118,9 +121,9 @@ export default function ViralSoundCard({ sound }) {
 
       {/* Quote / Hook Text jika tersedia */}
       {sound.viralMeta?.quote && (
-        <div className="mb-2.5 p-2 rounded-lg bg-[#14201a]/90 border border-emerald-500/20 flex items-start gap-1.5">
-          <Quote className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-emerald-200/90 italic line-clamp-2 leading-relaxed">
+        <div className="mb-2.5 p-2 rounded-lg bg-[#15120f]/90 border border-white/[0.08] flex items-start gap-1.5">
+          <Quote className="w-3.5 h-3.5 text-stone-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-[#f5b8b8]/90 italic line-clamp-2 leading-relaxed">
             "{sound.viralMeta.quote}"
           </p>
         </div>
@@ -132,24 +135,24 @@ export default function ViralSoundCard({ sound }) {
           <button
             type="button"
             onClick={handlePlay}
-            className="text-left w-full focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 rounded cursor-pointer"
+            className="text-left w-full focus:outline-none focus-visible:ring-1 focus-visible:ring-[#d9141f] rounded cursor-pointer"
           >
             <h4
-              className="text-sm font-semibold text-slate-100 truncate group-hover:text-emerald-300 transition-colors"
+              className="text-sm font-semibold text-stone-100 truncate group-hover:text-stone-100 transition-colors"
               title={sound.title}
             >
               {sound.title}
             </h4>
           </button>
-          <p className="text-xs text-slate-400 truncate mt-0.5" title={sound.artist}>
+          <p className="text-xs text-stone-400 truncate mt-0.5" title={sound.artist}>
             {sound.artist}
           </p>
         </div>
 
         {/* Status Legalitas & Tautan Izin */}
-        <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/[0.06] text-[11px] text-slate-500">
-          <span className="font-mono text-emerald-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/[0.06] text-[11px] text-stone-500">
+          <span className="font-mono text-stone-400 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#d9141f]" />
             Verified Legal
           </span>
 
@@ -159,7 +162,7 @@ export default function ViralSoundCard({ sound }) {
               target="_blank"
               rel="noopener noreferrer"
               title="Lihat dokumen bukti izin resmi (buka di tab baru)"
-              className="text-slate-400 hover:text-emerald-300 transition-colors ml-1 p-1 -m-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 rounded cursor-pointer"
+              className="text-stone-400 hover:text-white transition-colors ml-1 p-3 -m-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9141f] rounded cursor-pointer"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>

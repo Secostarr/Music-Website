@@ -5,7 +5,7 @@ use App\Http\Controllers\SavedTrackController;
 use App\Http\Controllers\UserAuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/music/search', MusicSearchController::class)->name('music.search');
+Route::get('/music/search', MusicSearchController::class)->middleware('throttle:10,1')->name('music.search');
 
 Route::prefix('auth')->middleware('throttle:10,1')->group(function (): void {
     Route::post('/register', [UserAuthController::class, 'register']);

@@ -80,9 +80,15 @@ class handler(BaseHTTPRequestHandler):
                 artists = item.get("artists") or []
                 album = item.get("album") or {}
                 thumbnails = item.get("thumbnails") or []
-                artwork = thumbnails[-1].get("url", "") if thumbnails else ""
+                if thumbnails:
+                    best = max(thumbnails, key=lambda t: (t.get("width") or 0) * (t.get("height") or 0))
+                    artwork = best.get("url", "") or ""
+                else:
+                    artwork = ""
                 if artwork:
-                    artwork = artwork.replace("w60-h60", "w1200-h1200").replace("w120-h120", "w1200-h1200").replace("=w60-h60", "=w1200-h1200").replace("=w120-h120", "=w1200-h1200")
+                    artwork = re.sub(r"w\d+-h\d+", "w1200-h1200", artwork)
+                if not artwork:
+                    artwork = "https://i.ytimg.com/vi/%s/maxresdefault.jpg" % v_id
                 tracks.append({
                     "id": v_id,
                     "source": "youtube",

@@ -116,7 +116,7 @@ export default function YouTubePlayer() {
       if (Number.isFinite(time)) setCurrentTime(time);
       const actualDuration = player.getDuration?.();
       if (Number.isFinite(actualDuration) && actualDuration > 0) setDuration(actualDuration);
-    }, 250);
+    }, 500);
     return () => {
       cancelled = true;
       youtubeSeekRef.current = null;

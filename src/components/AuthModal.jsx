@@ -55,20 +55,14 @@ export default function AuthModal() {
       className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
     >
       <div
-        className="relative w-full max-w-md rounded-3xl bg-gradient-to-b from-[#14231b] via-[#0f1713] to-[#0a0f0d] border border-white/[0.1] p-6 sm:p-8 shadow-2xl shadow-black/80 text-slate-100"
+        className="relative w-full max-w-md rounded-2xl bg-gradient-to-b from-[#221a15] via-[#15120f] to-[#0b0a09] border border-white/[0.1] p-6 sm:p-8 shadow-2xl shadow-black/80 text-stone-100"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Glow Ambient Effect */}
-        <div
-          aria-hidden="true"
-          className="absolute -top-16 -right-16 w-40 h-40 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"
-        />
-
         {/* Close Button */}
         <button
           type="button"
           onClick={closeAuthModal}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="absolute top-4 right-4 p-3 -m-1 text-stone-400 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9141f]"
           aria-label="Tutup jendela login"
         >
           <X className="w-5 h-5" />
@@ -76,14 +70,14 @@ export default function AuthModal() {
 
         {/* Header Icon & Title */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-stone-300">
             <Lock className="w-5 h-5" />
           </div>
           <div>
             <h2 id="auth-modal-title" className="text-xl font-bold tracking-tight text-white">
               {authModalMode === "login" ? "Masuk ke Akun" : "Daftar Akun Baru"}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-stone-400 mt-0.5">
               {pendingSaveTrack
                 ? `Masuk untuk menyimpan lagu "${pendingSaveTrack.title}"`
                 : "Akses playlist favorit dan simpan lagu tanpa batas"}
@@ -93,9 +87,9 @@ export default function AuthModal() {
 
         {/* Pending Save Notice */}
         {pendingSaveTrack && (
-          <div className="my-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
-            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-            <p className="text-xs text-emerald-200">
+          <div className="my-4 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-3">
+            <Sparkles className="w-4 h-4 text-stone-400 shrink-0" />
+            <p className="text-xs text-[#f5b8b8]">
               Lagu <strong className="text-white">{pendingSaveTrack.title}</strong> akan otomatis tersimpan setelah kamu masuk.
             </p>
           </div>
@@ -113,11 +107,11 @@ export default function AuthModal() {
         <form onSubmit={handleSubmit} className="space-y-3.5 mt-5">
           {authModalMode === "register" && (
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="auth-name">
+              <label className="block text-xs font-medium text-stone-300 mb-1.5" htmlFor="auth-name">
                 Nama Lengkap
               </label>
-              <div className="relative flex items-center bg-[#060907] border border-white/[0.08] focus-within:border-emerald-500/50 rounded-2xl px-3.5 py-2.5 transition-all">
-                <User className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
+              <div className="relative flex items-center bg-[#080706] border border-white/[0.08] focus-within:border-[#d9141f]/50 rounded-2xl px-3.5 py-2.5 transition-all">
+                <User className="w-4 h-4 text-stone-400 mr-2.5 shrink-0" />
                 <input
                   id="auth-name"
                   type="text"
@@ -125,18 +119,18 @@ export default function AuthModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Contoh: Bintang Nusantara"
-                  className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+                  className="w-full bg-transparent text-sm text-stone-100 placeholder-stone-500 focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="auth-email">
+            <label className="block text-xs font-medium text-stone-300 mb-1.5" htmlFor="auth-email">
               Alamat Email
             </label>
-            <div className="relative flex items-center bg-[#060907] border border-white/[0.08] focus-within:border-emerald-500/50 rounded-2xl px-3.5 py-2.5 transition-all">
-              <Mail className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
+            <div className="relative flex items-center bg-[#080706] border border-white/[0.08] focus-within:border-[#d9141f]/50 rounded-2xl px-3.5 py-2.5 transition-all">
+              <Mail className="w-4 h-4 text-stone-400 mr-2.5 shrink-0" />
               <input
                 id="auth-email"
                 type="email"
@@ -144,17 +138,17 @@ export default function AuthModal() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@email.com"
-                className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+                className="w-full bg-transparent text-sm text-stone-100 placeholder-stone-500 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="auth-password">
+            <label className="block text-xs font-medium text-stone-300 mb-1.5" htmlFor="auth-password">
               Kata Sandi
             </label>
-            <div className="relative flex items-center bg-[#060907] border border-white/[0.08] focus-within:border-emerald-500/50 rounded-2xl px-3.5 py-2.5 transition-all">
-              <Lock className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
+            <div className="relative flex items-center bg-[#080706] border border-white/[0.08] focus-within:border-[#d9141f]/50 rounded-2xl px-3.5 py-2.5 transition-all">
+              <Lock className="w-4 h-4 text-stone-400 mr-2.5 shrink-0" />
               <input
                 id="auth-password"
                 type="password"
@@ -163,7 +157,7 @@ export default function AuthModal() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 6 karakter"
-                className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
+                className="w-full bg-transparent text-sm text-stone-100 placeholder-stone-500 focus:outline-none"
               />
             </div>
           </div>
@@ -171,7 +165,7 @@ export default function AuthModal() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm transition-all shadow-xl shadow-emerald-950/70 border border-emerald-400/40 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-5 py-3 rounded-xl bg-gradient-to-r from-[#d9141f] to-[#a01015] hover:from-[#ef2430] hover:to-[#c0121a] text-white font-semibold text-sm transition-all shadow-xl shadow-[#59060b]/70 border border-[#ef2430]/40 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -185,14 +179,14 @@ export default function AuthModal() {
         </form>
 
         {/* Mode Switcher */}
-        <div className="mt-5 pt-4 border-t border-white/[0.06] text-center text-xs text-slate-400">
+        <div className="mt-5 pt-4 border-t border-white/[0.06] text-center text-xs text-stone-400">
           {authModalMode === "login" ? (
             <p>
               Belum punya akun?{" "}
               <button
                 type="button"
                 onClick={() => switchMode("register")}
-                className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-4 cursor-pointer focus:outline-none"
+                className="text-[#ef2430] hover:text-[#f44551] font-semibold underline underline-offset-4 cursor-pointer focus:outline-none"
               >
                 Daftar sekarang
               </button>
@@ -203,7 +197,7 @@ export default function AuthModal() {
               <button
                 type="button"
                 onClick={() => switchMode("login")}
-                className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-4 cursor-pointer focus:outline-none"
+                className="text-[#ef2430] hover:text-[#f44551] font-semibold underline underline-offset-4 cursor-pointer focus:outline-none"
               >
                 Masuk di sini
               </button>

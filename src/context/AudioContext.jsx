@@ -11,6 +11,18 @@ import { isValidUnifiedTrack } from "../data/viralSounds";
 
 const AudioContext = createContext(null);
 
+// Satu sumber penulisan playback tersimpan (dipakai throttle efek & saat pause)
+function persistPlayback(track, playlist, time) {
+  if (!track) return;
+  try {
+    const sanitized = { ...track };
+    delete sanitized._restoredPlayback;
+    localStorage.setItem("irama_playback", JSON.stringify({ track: sanitized, playlist, currentTime: time }));
+  } catch {
+    // Kalau storage penuh/tidak tersedia, playback tetap berjalan.
+  }
+}
+
 export function AudioProvider({ children }) {
   // Single HTMLAudioElement instance reference
   const audioRef = useRef(null);
@@ -78,22 +90,25 @@ export function AudioProvider({ children }) {
     };
   }, [currentTrack, playlist, isShuffle, repeatMode, isLoopSegment, volume, isMuted]);
 
+  // Refs untuk throttle penyimpanan playback ( hindari I/O localStorage 4x/detik )
+  const saveTimeRef = useRef(0);
+  const audioTimeRef = useRef(0);
+  const lastPushedTimeRef = useRef(-1);
+
   useEffect(() => {
-    try {
-      if (currentTrack) {
-        const stored = JSON.parse(localStorage.getItem("irama_playback") || "null");
-        const keepRestoredTime = stored?.track?.id === currentTrack.id && currentTime === 0 && stored.currentTime > 0;
-        const sanitizedTrack = { ...currentTrack };
-        delete sanitizedTrack._restoredPlayback;
-        localStorage.setItem("irama_playback", JSON.stringify({
-          track: sanitizedTrack,
-          playlist,
-          currentTime: keepRestoredTime ? stored.currentTime : currentTime,
-        }));
-      }
-    } catch {
-      // Kalau storage penuh/tidak tersedia, playback tetap berjalan.
+    if (!currentTrack) return;
+    const save = () => persistPlayback(currentTrack, playlist, audioTimeRef.current);
+    // Throttle 3 detik; simpan paksa saat tab disembunyikan/ditutup agar posisi tidak hilang
+    if (Date.now() - saveTimeRef.current > 3000) {
+      saveTimeRef.current = Date.now();
+      save();
     }
+    document.addEventListener("visibilitychange", save);
+    window.addEventListener("beforeunload", save);
+    return () => {
+      document.removeEventListener("visibilitychange", save);
+      window.removeEventListener("beforeunload", save);
+    };
   }, [currentTrack, playlist, currentTime]);
 
   useEffect(() => {
@@ -175,6 +190,7 @@ export function AudioProvider({ children }) {
       if (track.source === "youtube") {
         const currentGen = ++playGenerationRef.current;
         stateRef.current.playGen = currentGen;
+        lastPushedTimeRef.current = -1;
         setError(null);
         if (audio) {
           audio.pause();
@@ -197,6 +213,7 @@ export function AudioProvider({ children }) {
 
       const currentGen = ++playGenerationRef.current;
       stateRef.current.playGen = currentGen;
+      lastPushedTimeRef.current = -1;
       setError(null);
 
       // Ambil audio URL (dukung UnifiedTrack.audioUrl atau legacy previewUrl)
@@ -491,6 +508,8 @@ export function AudioProvider({ children }) {
 
     const handlePause = () => {
       if (isCurrentRequest()) setIsPlaying(false);
+      // Simpan posisi terakhir segera saat jeda
+      persistPlayback(stateRef.current.currentTrack, stateRef.current.playlist, audio.currentTime);
     };
 
     const handleWaiting = () => {
@@ -537,7 +556,13 @@ export function AudioProvider({ children }) {
       const track = stateRef.current.currentTrack;
       const isLoop = stateRef.current.isLoopSegment;
       const curTime = audio.currentTime;
-      setCurrentTime(curTime);
+      audioTimeRef.current = curTime;
+
+      // Throttle render: slider cukup segar 4x/detik tanpa memicu re-render tiap event
+      if (Math.abs(curTime - (lastPushedTimeRef.current ?? -1)) >= 0.75) {
+        lastPushedTimeRef.current = curTime;
+        setCurrentTime(curTime);
+      }
 
       // Cek segment looping
       if (isLoop && track) {

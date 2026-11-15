@@ -1,5 +1,5 @@
 # Dockerfile multi-stage / all-in-one untuk menjalankan Laravel + Python ytmusicapi di Render
-FROM php:8.2-cli
+FROM php:8.4-cli
 
 # Install dependencies sistem, Python 3, pip, dan git
 RUN apt-get update && apt-get install -y \

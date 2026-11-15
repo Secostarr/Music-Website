@@ -36,7 +36,7 @@ export default function ViewTabs({ activeTab, onTabChange }) {
       <div
         role="tablist"
         aria-label="Pilihan Katalog Musik"
-        className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#0f1713]/80 border border-white/[0.06] backdrop-blur-md max-w-fit"
+        className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#15120f]/80 border border-white/[0.06] backdrop-blur-md max-w-full sm:max-w-fit"
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -52,15 +52,15 @@ export default function ViewTabs({ activeTab, onTabChange }) {
               tabIndex={isActive ? 0 : -1}
               onClick={() => onTabChange(tab.id)}
               onKeyDown={(e) => handleKeyDown(e, tab.id)}
-              className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+              className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9141f] ${
                 isActive
-                  ? "bg-[#14201a] text-slate-100 border border-emerald-500/30 shadow-md shadow-black/40"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+                  ? "bg-[#1d1915] text-stone-100 border border-[#d9141f]/30 shadow-md shadow-black/40"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-white/[0.04]"
               }`}
             >
               <Icon
                 className={`w-4 h-4 transition-colors ${
-                  isActive ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-300"
+                  isActive ? "text-[#ef2430]" : "text-stone-400 group-hover:text-stone-300"
                 }`}
                 aria-hidden="true"
               />
@@ -70,8 +70,8 @@ export default function ViewTabs({ activeTab, onTabChange }) {
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider transition-colors ${
                     isActive
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                      : "bg-white/[0.05] text-slate-400 border border-white/[0.05]"
+                      ? "bg-[#d9141f]/20 text-[#f44551] border border-[#d9141f]/30"
+                      : "bg-white/[0.05] text-stone-400 border border-white/[0.05]"
                   }`}
                 >
                   {tab.badge}
@@ -82,7 +82,7 @@ export default function ViewTabs({ activeTab, onTabChange }) {
               {isActive && (
                 <span
                   aria-hidden="true"
-                  className="absolute -bottom-2 left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                  className="absolute -bottom-2 left-2 right-2 h-[2px] bg-gradient-to-r from-transparent via-[#d9141f] to-transparent shadow-[0_0_8px_rgba(217,20,31,0.8)]"
                 />
               )}
             </button>

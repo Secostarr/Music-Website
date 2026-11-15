@@ -60,6 +60,14 @@ class AdminAuthTest extends TestCase
     public function test_admin_upload_transcribes_audio_when_lyrics_are_omitted(): void
     {
         Storage::fake('public');
+        // Fake lrclib agar test tidak bergantung pada jaringan (mis. mesin tanpa CA bundle)
+        Http::fake(['*' => Http::response([], 200)]);
+        // Proses Whisper di-fake; env hanya perlu menunjuk file yang benar-benar ada agar lolos pemeriksaan is_file()
+        foreach (['WHISPER_PYTHON', 'WHISPER_FFMPEG'] as $key) {
+            putenv("{$key}=" . PHP_BINARY);
+            $_ENV[$key] = PHP_BINARY;
+            $_SERVER[$key] = PHP_BINARY;
+        }
         Process::fake([
             '*' => Process::result(output: json_encode([
                 'language' => 'en',
