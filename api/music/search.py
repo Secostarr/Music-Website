@@ -5,6 +5,8 @@ import urllib.parse
 import urllib.request
 from ytmusicapi import YTMusic
 
+yt = YTMusic()
+
 
 def lyrics_from_lrclib(title, artist):
     params = urllib.parse.urlencode({"track_name": title, "artist_name": artist})
